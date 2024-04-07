@@ -1,6 +1,6 @@
 ## 🔽 Installation
 
-Run the 'install_python_and_packages' BAT file, then you need to restart it to be able to install the packages (unless Python was already installed).
+Run the `public > install_python_and_packages` BAT file, then you need to restart it to be able to install the packages (unless Python was already installed).
 
 ## 🤔 Explications
 
