@@ -42,13 +42,13 @@ def get_telechargements_path():
         value = winreg.QueryValueEx(key, '{374DE290-123F-4565-9164-39C4925E467B}')[0]
         return Path(value)
 
-chemin_telechargements = get_telechargements_path()
+telechargements_path = get_telechargements_path()
 #============================= END OF CHEMIN DE TELECHARGEMENT ==============================
 
 #================================= INSTALLATION DES APPLICATIONS ================================
-def installer_applications():
-    applications_installees = [app for app, installed in variables_applications.items() if installed.get()]
-    if not applications_installees:
+def download_applications():
+    applications_installed = [app for app, installed in variables_applications.items() if installed.get()]
+    if not applications_installed:
         messagebox.showinfo("Information", "Aucune application sélectionnée!")
         return
 
@@ -61,8 +61,8 @@ def installer_applications():
                 try:
                     #======== .MSI =========
                     if url.endswith('.msi'):
-                        chemin_fichier = chemin_telechargements / (app + ".msi")
-                        with open(chemin_fichier, "wb") as f:
+                        files_path = telechargements_path / (app + ".msi")
+                        with open(files_path, "wb") as f:
                             response = requests.get(url, stream=True)
                             total_size = int(response.headers.get('content-length', 0))
                             with tqdm(total=total_size, unit='B', unit_scale=True, desc=f'Téléchargement de {app}', unit_divisor=1024) as pbar:
@@ -71,12 +71,12 @@ def installer_applications():
                                     pbar.update(len(data))
 
                         # Exécution de msiexec pour installer le fichier MSI
-                        subprocess.call(["msiexec", "/i", str(chemin_fichier)])
+                        subprocess.call(["msiexec", "/i", str(files_path)])
                     
                     #======== .EXE =========
                     else:
-                        chemin_fichier = chemin_telechargements / (app + ".exe")
-                        with open(chemin_fichier, "wb") as f:
+                        files_path = telechargements_path / (app + ".exe")
+                        with open(files_path, "wb") as f:
                             response = requests.get(url, stream=True)
                             total_size = int(response.headers.get('content-length', 0))
                             with tqdm(total=total_size, unit='B', unit_scale=True, desc=f'Téléchargement de {app}', unit_divisor=1024) as pbar:
@@ -85,12 +85,11 @@ def installer_applications():
                                     pbar.update(len(data))
 
                     # Exécution du fichier d'installation avec les droits administrateur
-                    ctypes.windll.shell32.ShellExecuteW(None, "runas", str(chemin_fichier), None, None, 1)
+                    ctypes.windll.shell32.ShellExecuteW(None, "runas", str(files_path), None, None, 1)
 
                 except Exception as e:
                     messagebox.showerror("Erreur", f"Impossible d'installer {app} : {str(e)}")
     root.destroy() # Fermeture après l'installation des apps
-
 #============================= END OF INSTALLATION DES APPLICATIONS ==============================
 
 #================================= FENETRE TINKER ================================
@@ -118,7 +117,7 @@ for app in applications:
         column += 1
 
 #Bouton d'installation et quitter
-install_button = tk.Button(root, text="Installer", command=installer_applications, width=20, bg="blue", fg="white", relief="raised", font=('Helvetica', 12, 'bold'))
+install_button = tk.Button(root, text="Installer", command=download_applications, width=20, bg="blue", fg="white", relief="raised", font=('Helvetica', 12, 'bold'))
 install_button.pack(pady=10)
 
 quit_button = tk.Button(root, text="Quitter", command=root.destroy, width=20, bg="red", fg="white", relief="raised", font=('Helvetica', 12, 'bold'))
