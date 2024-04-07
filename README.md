@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/.bat-download-blue?style=flat-square&logo=windows" alt="Download .bat">
 </a>
 
-Run the BAT file 'install_python', then 'install_package' to install Python and the necessary packages. (Note: Python must be installed before installing the packages.)
+Run the BAT file 'install_python', then 'install_package' to install Python and the necessary packages. (Note: Python must be installed before installing the packages)
 
 ## Applications
 
