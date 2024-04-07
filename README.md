@@ -23,4 +23,4 @@ Run the BAT file 'install_python', then 'install_package' to install Python and 
 
 ## 🌏 Languages
 
-- [x] <img src="img/Country Flags/france.png" width="20px" height="20px"> Français
+- [x] <img src="https://www.countryflags.com/wp-content/uploads/france-flag-png-large.png" width="20px" height="20px"> Français
