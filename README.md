@@ -1,6 +1,6 @@
 ## 🔽 Installation
 
-Run the BAT file 'install_python', then 'install_package' to install Python and the necessary packages. (Note: Python must be installed before installing the packages)
+Run the `install_python_and_packages` BAT file, then you need to restart it to be able to install the packages (unless Python was already installed).
 
 ## 🤔 Explications
 

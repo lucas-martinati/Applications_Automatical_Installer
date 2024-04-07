@@ -16,5 +16,12 @@ del python_installer.exe
 echo Python a ete installe avec succes.
 
 :continue
-echo Lancez install_package.bat pour telecharger le package
+echo Installation de requests...
+pip install requests
+
+echo Le package requests a ete installe avec succes.
+echo Installation de tqdm...
+pip install tqdm
+
+echo seul le telechargement de python a etait effectuer, veuillez relancer le .bat pour installer les packages
 pause
