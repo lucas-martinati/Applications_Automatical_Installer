@@ -1,4 +1,11 @@
 @echo off
+
+where python >nul 2>nul
+if %errorlevel% equ 0 (
+    echo Python est deja installe.
+    goto :continue
+)
+
 echo Telechargement de Python...
 curl -o python_installer.exe https://www.python.org/ftp/python/3.12.0/python-3.12.0-amd64.exe
 
@@ -8,5 +15,6 @@ del python_installer.exe
 
 echo Python a ete installe avec succes.
 
+:continue
 echo Lancez install_package.bat pour telecharger le package
 pause
