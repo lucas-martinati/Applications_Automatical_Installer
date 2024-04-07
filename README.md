@@ -20,3 +20,7 @@ Run the BAT file 'install_python', then 'install_package' to install Python and 
 - Streamlabs
 - Wemod
 - Winrar
+
+## 🌏 Languages
+
+- [x] <img src="img/Country Flags/france.png" width="20px" height="20px"> Français
