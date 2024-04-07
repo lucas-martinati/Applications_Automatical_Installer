@@ -4,7 +4,7 @@ Run the `install_python_and_packages` BAT file, then you need to restart it to b
 
 ## 🤔 Explications
 
-This repository allows for the automatic installation of applications selected from a list (which can be easily expanded). Each installation of each application will be performed and launched in administrator mode (to avoid any conflicts), and they will be stored in the 'Downloads' folder of Windows. However, please note that certain applications like 'Nvidia App' or 'Davinci Resolve' do not work (as they require connections during installation or otherwise). When checked, they will thus lead to the website where you can install them. All applications with this issue are marked with '(site)' in their name and are at the end of the list.
+This repository allows automatic installation of applications selected from a list (which can be easily expanded). Each installation of each application will be carried out and launched in administrator mode (to avoid any conflicts), and they will be stored in the Windows 'Downloads' folder. Please note, however, that some applications like "Nvidia App" or "Davinci Resolve" do not work (because they require connections during installation or otherwise). Once checked, they will lead to the website where you can install them. All applications presenting this problem are marked with “(Manual)” in their name and will be in Purple, in addition you will be able to find a list of extensions which will also lead to their site.
 
 ## 📱 Applications
 

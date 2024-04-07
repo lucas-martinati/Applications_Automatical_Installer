@@ -20,8 +20,12 @@ echo Installation de requests...
 pip install requests
 
 echo Le package requests a ete installe avec succes.
+echo Installation de PyQt5...
+pip install PyQt5
+
+echo Le package PyQt5 a ete installe avec succes.
 echo Installation de tqdm...
 pip install tqdm
 
-echo seul le telechargement de python a etait effectuer, veuillez relancer le .bat pour installer les packages
+echo si seul le telechargement de python a etait effectuer, veuillez relancer le .bat pour installer les packages
 pause
