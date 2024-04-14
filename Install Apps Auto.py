@@ -49,7 +49,7 @@ class AppInstaller(QWidget):
             "Microsoft PowerToys (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&productid=xp89dcgq3k6vld&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
             "Pichon (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid=9nk8t1kshffr&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
             "Wintoys (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid=9p8ltpgcbzxd&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
-            "Microsoft 365 (Office)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid=9wzdncrd29v9&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
+            "Office (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid=9wzdncrd29v9&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
         }
         self.setup_ui()
 
@@ -76,15 +76,15 @@ class AppInstaller(QWidget):
         column3 = QVBoxLayout()
         
         select_all_column1_button = QPushButton("Tout sélectionner")
-        select_all_column1_button.clicked.connect(self.select_all_column1)
+        select_all_column1_button.clicked.connect(lambda: self.select_all_column(self.column1_checkboxes))
         select_all_layout.addWidget(select_all_column1_button)
 
         select_all_column2_button = QPushButton("Tout sélectionner")
-        select_all_column2_button.clicked.connect(self.select_all_column2)
+        select_all_column2_button.clicked.connect(lambda: self.select_all_column(self.column2_checkboxes))
         select_all_layout.addWidget(select_all_column2_button)
 
         select_all_column3_button = QPushButton("Tout sélectionner")
-        select_all_column3_button.clicked.connect(self.select_all_column3)
+        select_all_column3_button.clicked.connect(lambda: self.select_all_column(self.column3_checkboxes))
         select_all_layout.addWidget(select_all_column3_button)
 
         columns_layout = QHBoxLayout()
@@ -133,28 +133,12 @@ class AppInstaller(QWidget):
         quit_button.clicked.connect(self.close)
         button_layout.addWidget(quit_button)
     #================ END OF UI ================
-    def select_all_column1(self):
-        if self.column1_checkboxes[0].isChecked():
-            for checkbox in self.column1_checkboxes:
+    def select_all_column(self, column_checkboxes):
+        if column_checkboxes[0].isChecked():
+            for checkbox in column_checkboxes:
                 checkbox.setChecked(False)
         else:
-            for checkbox in self.column1_checkboxes:
-                checkbox.setChecked(True)
-
-    def select_all_column2(self):
-        if self.column2_checkboxes[0].isChecked():
-            for checkbox in self.column2_checkboxes:
-                checkbox.setChecked(False)
-        else:
-            for checkbox in self.column2_checkboxes:
-                checkbox.setChecked(True)
-
-    def select_all_column3(self):
-        if self.column3_checkboxes[0].isChecked():
-            for checkbox in self.column3_checkboxes:
-                checkbox.setChecked(False)
-        else:
-            for checkbox in self.column3_checkboxes:
+            for checkbox in column_checkboxes:
                 checkbox.setChecked(True)
 
     #================================= INSTALLATION DES APPLICATIONS ================================
