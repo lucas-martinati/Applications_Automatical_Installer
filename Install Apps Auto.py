@@ -45,6 +45,11 @@ class AppInstaller(QWidget):
             "Steam Inventory Helper (Extension)": "https://chrome.google.com/webstore/detail/steam-inventory-helper/cmeakgjggjdlcpncigglobpjbkabhmjl", # Extension
             "Twitch Live (Extension)": "https://chrome.google.com/webstore/detail/twitch-live-extension/nlnfdlcbnpafokhpjfffmoobbejpedgj", # Extension
             "Volume Booster (Extension)": "https://chromewebstore.google.com/detail/buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl", # Extension
+            "Visual Studio Code (Microsoft)": "ms-windows-store://pdp?hl=en-us&gl=us&productid=xp9khm4bk9fz7q&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
+            "Microsoft PowerToys (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&productid=xp89dcgq3k6vld&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
+            "Pichon (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid=9nk8t1kshffr&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
+            "Wintoys (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid=9p8ltpgcbzxd&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
+            "Microsoft 365 (Office)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid=9wzdncrd29v9&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
         }
         self.setup_ui()
 
@@ -60,6 +65,7 @@ class AppInstaller(QWidget):
         title_layout = QHBoxLayout()
         title_layout.addWidget(QLabel("Applications", font=title_font), alignment=Qt.AlignCenter)
         title_layout.addWidget(QLabel("Extensions Brave", font=title_font), alignment=Qt.AlignCenter)
+        title_layout.addWidget(QLabel("Applications Microsoft Store", font=title_font), alignment=Qt.AlignCenter)
         layout.addLayout(title_layout)
 
         select_all_layout = QHBoxLayout()
@@ -77,16 +83,24 @@ class AppInstaller(QWidget):
         select_all_column2_button.clicked.connect(self.select_all_column2)
         select_all_layout.addWidget(select_all_column2_button)
 
+        select_all_column3_button = QPushButton("Tout sélectionner")
+        select_all_column3_button.clicked.connect(self.select_all_column3)
+        select_all_layout.addWidget(select_all_column3_button)
+
         columns_layout = QHBoxLayout()
         layout.addLayout(columns_layout)
 
         columns_layout.addLayout(column1)
         columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         columns_layout.addLayout(column2)
+        columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        columns_layout.addLayout(column3)
+        columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
         self.checkboxes = {}
         self.column1_checkboxes = []
         self.column2_checkboxes = []
+        self.column3_checkboxes = []
 
         for app in self.applications:
             checkbox = QCheckBox(app)
@@ -98,6 +112,10 @@ class AppInstaller(QWidget):
                 checkbox.setStyleSheet("color: green")
                 column2.addWidget(checkbox)
                 self.column2_checkboxes.append(checkbox)
+            elif "(Microsoft)" in app:
+                checkbox.setStyleSheet("color: blue")
+                column3.addWidget(checkbox)
+                self.column3_checkboxes.append(checkbox)
             else:
                 column1.addWidget(checkbox)
                 self.column1_checkboxes.append(checkbox)
@@ -131,6 +149,14 @@ class AppInstaller(QWidget):
             for checkbox in self.column2_checkboxes:
                 checkbox.setChecked(True)
 
+    def select_all_column3(self):
+        if self.column3_checkboxes[0].isChecked():
+            for checkbox in self.column3_checkboxes:
+                checkbox.setChecked(False)
+        else:
+            for checkbox in self.column3_checkboxes:
+                checkbox.setChecked(True)
+
     #================================= INSTALLATION DES APPLICATIONS ================================
     def install_applications(self):
         applications_installed = [app for app, checkbox in self.checkboxes.items() if checkbox.isChecked()]
@@ -142,7 +168,9 @@ class AppInstaller(QWidget):
         for app in applications_installed:
             url = self.applications[app]
             try:
-                if "(manuel)" in app or "(Extension)" in app:
+                if "(manuel)" in app or "(Extension)" in app or "(Microsoft)" in app:
+                    if "(Microsoft)" in app:
+                        QMessageBox.information(self, "Information", f"Veuillez installer manuellement l'application {app} depuis le Microsoft Store.")
                     webbrowser.open(url)
                 else:
                     file_name = f"{app}.msi" if url.endswith('.msi') else f"{app}.exe"
