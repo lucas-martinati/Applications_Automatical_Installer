@@ -180,17 +180,19 @@ class AppInstaller(QWidget):
 
     #================================= CHEMIN DE TELECHARGEMENT ================================
     def get_downloads_path(self):
+        sub_key = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+        downloads_guid = "{374DE290-123F-4565-9164-39C4925E467B}"
         try:
-            sub_key = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders'
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sub_key) as key:
-                downloads_path = winreg.QueryValueEx(key, '{374DE290-123F-4565-9164-39C4925E467B}')[[1]]
-        except Exception as e:
-            print(f"Erreur lors de la récupération du dossier Downloads: {e}")
-            # Retourner le dossier Downloads par défaut si la lecture du registre échoue
-            downloads_path = os.path.join(os.getenv('USERPROFILE'), 'Downloads')
-            
-        # Expanding environment variables in case the registry contains a reference like %USERPROFILE%
-        return Path(os.path.expandvars(downloads_path))
+                # This might return a path with environment variables that need to be expanded
+                value, _ = winreg.QueryValueEx(key, downloads_guid)
+                # Expand potential environment variables in the path
+                downloads_path = os.path.expandvars(value)
+                # Convert it to a Path object and return
+                return Path(downloads_path)
+        except FileNotFoundError:
+            # Fallback to the default downloads directory if the registry approach fails
+            return Path.home() / "Downloads"
     #============================= END OF CHEMIN DE TELECHARGEMENT ==============================
 
 if __name__ == '__main__':
