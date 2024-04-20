@@ -13,6 +13,7 @@ This repository allows automatic installation of applications selected from a li
 - Epic Games
 - Git
 - GOG Galaxy
+- Google Drive
 - Java
 - Logitech G HUB
 - Modrinth
@@ -25,7 +26,7 @@ This repository allows automatic installation of applications selected from a li
 - Wemod
 - Winrar
 
-![Capture d'écran 2024-04-14 172153](https://github.com/LucasM548/Auto-Install-Apps/assets/127530926/b95ae879-d27d-4fa4-b98c-840aa17695c1)
+![image](https://github.com/LucasM548/Auto-Install-Apps/assets/127530926/385d832f-d6d0-44eb-be9e-b8faea89c46d)
 ![image](https://github.com/LucasM548/Auto-Install-Apps/assets/127530926/bca90f2f-6af8-4942-b4f6-a662165a1fc1)
 
 ## 🌏 Languages
