@@ -32,11 +32,11 @@ class AppInstaller(QWidget):
             "Streamlabs": "https://streamlabs.com/streamlabs-desktop/download?sdb=0",
             "Wemod": "https://www.wemod.com/download/direct",
             "Winrar": "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-700fr.exe",
-            "Davinci Resolve (manuel)": "https://www.blackmagicdesign.com/fr/products/davinciresolve", # Install manuel
-            "HWINFO (manuel)": "https://www.hwinfo.com/download/", # Install manuel
-            "NVIDIA App (manuel)": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe", # Install manuel
-            "NVIDIA GeForce NOW (manuel)": "https://download.nvidia.com/gfnpc/GeForceNOW-release.exe", # Install manuel
-            "Voicemod (manuel)": "https://www.voicemod.net/", # Install manuel
+            "Davinci Resolve (manual)": "https://www.blackmagicdesign.com/fr/products/davinciresolve", # Installation manuel
+            "HWINFO (manual)": "https://www.hwinfo.com/download/", # Installation manuel
+            "NVIDIA App (manual)": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe", # Instalationl manuel
+            "NVIDIA GeForce NOW (manual)": "https://download.nvidia.com/gfnpc/GeForceNOW-release.exe", # Installation manuel
+            "Voicemod (manual)": "https://www.voicemod.net/", # Installation manuel
             "Authentificator (Extension)": "https://chrome.google.com/webstore/detail/authenticator/bhghoamapcdpbohphigoooaddinpkbai", # Extension
             "Buster - Captcha Solver (Extension)": "https://chrome.google.com/webstore/detail/buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl/related", # Extension
             "Dark Reader (Extension)": "https://chrome.google.com/webstore/detail/dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh", # Extension
@@ -66,8 +66,8 @@ class AppInstaller(QWidget):
 
         title_layout = QHBoxLayout()
         title_layout.addWidget(QLabel("Applications", font=title_font), alignment=Qt.AlignCenter)
-        title_layout.addWidget(QLabel("Extensions Brave", font=title_font), alignment=Qt.AlignCenter)
-        title_layout.addWidget(QLabel("Applications Microsoft Store", font=title_font), alignment=Qt.AlignCenter)
+        title_layout.addWidget(QLabel("Chrome Extensions", font=title_font), alignment=Qt.AlignCenter)
+        title_layout.addWidget(QLabel("Microsoft Store Applications", font=title_font), alignment=Qt.AlignCenter)
         layout.addLayout(title_layout)
 
         select_all_layout = QHBoxLayout()
@@ -77,15 +77,15 @@ class AppInstaller(QWidget):
         column2 = QVBoxLayout()
         column3 = QVBoxLayout()
         
-        select_all_column1_button = QPushButton("Tout sélectionner")
+        select_all_column1_button = QPushButton("All select")
         select_all_column1_button.clicked.connect(lambda: self.select_all_column(self.column1_checkboxes))
         select_all_layout.addWidget(select_all_column1_button)
 
-        select_all_column2_button = QPushButton("Tout sélectionner")
+        select_all_column2_button = QPushButton("All select")
         select_all_column2_button.clicked.connect(lambda: self.select_all_column(self.column2_checkboxes))
         select_all_layout.addWidget(select_all_column2_button)
 
-        select_all_column3_button = QPushButton("Tout sélectionner")
+        select_all_column3_button = QPushButton("All select")
         select_all_column3_button.clicked.connect(lambda: self.select_all_column(self.column3_checkboxes))
         select_all_layout.addWidget(select_all_column3_button)
 
@@ -106,7 +106,7 @@ class AppInstaller(QWidget):
 
         for app in self.applications:
             checkbox = QCheckBox(app)
-            if "(manuel)" in app:
+            if "(manual)" in app:
                 checkbox.setStyleSheet("color: purple")
                 column1.addWidget(checkbox)
                 self.column1_checkboxes.append(checkbox)
@@ -127,11 +127,11 @@ class AppInstaller(QWidget):
         button_layout = QHBoxLayout()
         layout.addLayout(button_layout)
 
-        install_button = QPushButton("Installer")
+        install_button = QPushButton("Install")
         install_button.clicked.connect(self.install_applications)
         button_layout.addWidget(install_button)
 
-        quit_button = QPushButton("Quitter")
+        quit_button = QPushButton("Quit")
         quit_button.clicked.connect(self.close)
         button_layout.addWidget(quit_button)
     #================ END OF UI ================
@@ -147,16 +147,16 @@ class AppInstaller(QWidget):
     def install_applications(self):
         applications_installed = [app for app, checkbox in self.checkboxes.items() if checkbox.isChecked()]
         if not applications_installed:
-            QMessageBox.information(self, "Information", "Aucune application sélectionnée!")
+            QMessageBox.information(self, "Information", "No application selected!")
             return
 
         downloads_path = self.get_downloads_path()
         for app in applications_installed:
             url = self.applications[app]
             try:
-                if "(manuel)" in app or "(Extension)" in app or "(Microsoft)" in app:
+                if "(manual)" in app or "(Extension)" in app or "(Microsoft)" in app:
                     if "(Microsoft)" in app:
-                        QMessageBox.information(self, "Information", f"Veuillez installer manuellement l'application {app} depuis le Microsoft Store.")
+                        QMessageBox.information(self, "Information", f"Please manually install the {app} application from the Microsoft Store.")
                     webbrowser.open(url)
                 else:
                     file_name = f"{app}.msi" if url.endswith('.msi') else f"{app}.exe"
@@ -164,7 +164,7 @@ class AppInstaller(QWidget):
 
                     response = requests.get(url, stream=True)
                     total_size = int(response.headers.get('content-length', 0))
-                    with open(file_path, "wb") as f, tqdm(total=total_size, unit='B', unit_scale=True, desc=f'Téléchargement de {app}', unit_divisor=1024) as pbar:
+                    with open(file_path, "wb") as f, tqdm(total=total_size, unit='B', unit_scale=True, desc=f'Downloading {app}', unit_divisor=1024) as pbar:
                         for data in response.iter_content(chunk_size=1024):
                             f.write(data)
                             pbar.update(len(data))
@@ -175,7 +175,7 @@ class AppInstaller(QWidget):
                         subprocess.Popen([str(file_path)], shell=True)
 
             except Exception as e:
-                QMessageBox.critical(self, "Erreur", f"Impossible d'installer {app} : {str(e)}")
+                QMessageBox.critical(self, "Erreur", f"Unable to install {app} : {str(e)}")
         self.close()
     #============================= END OF INSTALLATION DES APPLICATIONS ==============================
 

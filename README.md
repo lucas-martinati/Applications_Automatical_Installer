@@ -26,9 +26,5 @@ This repository allows automatic installation of applications selected from a li
 - Wemod
 - Winrar
 
-![image](https://github.com/LucasM548/Auto-Install-Apps/assets/127530926/385d832f-d6d0-44eb-be9e-b8faea89c46d)
+![image](https://github.com/LucasM548/Auto-Install-Apps/assets/127530926/37cf6658-8433-4846-b8aa-0186c59122d0)
 ![image](https://github.com/LucasM548/Auto-Install-Apps/assets/127530926/bca90f2f-6af8-4942-b4f6-a662165a1fc1)
-
-## 🌏 Languages
-
-- [x] <img src="https://www.countryflags.com/wp-content/uploads/france-flag-png-large.png" width="20px" height="20px"> Français

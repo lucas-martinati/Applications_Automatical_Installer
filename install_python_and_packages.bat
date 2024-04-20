@@ -2,30 +2,30 @@
 
 where python >nul 2>nul
 if %errorlevel% equ 0 (
-    echo Python est deja installe.
+    echo Python is already installed.
     goto :continue
 )
 
-echo Telechargement de Python...
+echo Downloading Python...
 curl -o python_installer.exe https://www.python.org/ftp/python/3.12.0/python-3.12.0-amd64.exe
 
-echo Installation de Python...
+echo Installing Python...
 python_installer.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
 del python_installer.exe
 
-echo Python a ete installe avec succes.
+echo Python has been successfully installed.
 
 :continue
-echo Installation de requests...
+echo Installing requests...
 pip install requests
 
-echo Le package requests a ete installe avec succes.
-echo Installation de PyQt5...
+echo The requests package has been successfully installed.
+echo Installing PyQt5...
 pip install PyQt5
 
-echo Le package PyQt5 a ete installe avec succes.
-echo Installation de tqdm...
+echo The PyQt5 package has been successfully installed.
+echo Installing tqdm...
 pip install tqdm
 
-echo si seul le telechargement de python a etait effectuer, veuillez relancer le .bat pour installer les packages
+echo If only the Python download was completed, please rerun the .bat file to install the packages.
 pause
