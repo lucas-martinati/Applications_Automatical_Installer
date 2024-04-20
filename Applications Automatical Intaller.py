@@ -17,7 +17,7 @@ class AppInstaller(QWidget):
         def Store_url(productid):
             return f"ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid={productid}&mode=mini&pos=7%2C2%2C1922%2C922"
         def extension_url(id):
-            return f"https://chrome.google.com/webstore/detail/{id}"
+            return f"https://chromewebstore.google.com/detail/{id}"
         self.applications = {
             "Brave": {"url": "https://laptop-updates.brave.com/latest/winx64"},
             "Discord": {"url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64"},
@@ -42,7 +42,7 @@ class AppInstaller(QWidget):
             "NVIDIA GeForce NOW (manual)": {"url": "https://download.nvidia.com/gfnpc/GeForceNOW-release.exe"},
             "Voicemod (manual)": {"url": "https://www.voicemod.net/"},
             "Authentificator": {"url": extension_url("authenticator/bhghoamapcdpbohphigoooaddinpkbai"), "type": "extension"},
-            "Buster - Captcha Solver": {"url": extension_url("buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl/related"), "type": "extension"},
+            "Buster - Captcha Solver": {"url": extension_url("buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl"), "type": "extension"},
             "Dark Reader": {"url": extension_url("dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh"), "type": "extension"},
             "Google Traduction": {"url": extension_url("google-translate/aapbdbdomjkkjkaonfhkkikfgjllcleb"), "type": "extension"},
             "Hower Zoom+": {"url": extension_url("hover-zoom%2B/pccckmaobkjjboncdfnnofkonhgpceea"), "type": "extension"},
@@ -50,7 +50,7 @@ class AppInstaller(QWidget):
             "SponsorBlock": {"url": extension_url("sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone"), "type": "extension"},
             "Steam Inventory Helper": {"url": extension_url("steam-inventory-helper/cmeakgjggjdlcpncigglobpjbkabhmjl"), "type": "extension"},
             "Twitch Live": {"url": extension_url("twitch-live-extension/nlnfdlcbnpafokhpjfffmoobbejpedgj"), "type": "extension"},
-            "Volume Booster": {"url": extension_url("buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl"), "type": "extension"},
+            "Volume Master": {"url": extension_url("volume-master-contrôleur/jghecgabfgfdldnmbfkhmffcabddioke"), "type": "extension"},
             "Visual Studio Code": {"url": Store_url("xp9khm4bk9fz7q"), "type": "microsoft"},
             "Microsoft PowerToys": {"url": Store_url("xp89dcgq3k6vld"), "type": "microsoft"},
             "Pichon": {"url": Store_url("9nk8t1kshffr"), "type": "microsoft"},
