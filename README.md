@@ -13,6 +13,7 @@ This repository allows automatic installation of applications selected from a li
 - Epic Games
 - Git
 - GOG Galaxy
+- Google Drive
 - Java
 - Logitech G HUB
 - Modrinth
