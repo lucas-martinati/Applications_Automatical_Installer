@@ -13,45 +13,49 @@ import os
 class AppInstaller(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Installateur d'applications")
+        self.setWindowTitle("Applications Automatical Intaller")
+        def Store_url(productid):
+            return f"ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid={productid}&mode=mini&pos=7%2C2%2C1922%2C922"
+        def extension_url(id):
+            return f"https://chrome.google.com/webstore/detail/{id}"
         self.applications = {
-            "Brave": "https://laptop-updates.brave.com/latest/winx64",
-            "Discord": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64",
-            "Google Drive": "https://dl.google.com/drive-file-stream/GoogleDriveSetup.exe",
-            "Epic Games": "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi",
-            "Git": "https://github.com/git-for-windows/git/releases/download/v2.44.0.windows.1/Git-2.44.0-64-bit.exe",
-            "GOG Galaxy": "https://webinstallers.gog-statics.com/download/GOG_Galaxy_2.0.exe?payload=aKB7F3BHw5NoN2YWknDMijQCYnKgHNmiuE-ZQH5qOFwqEprfTG4XR9vIgNeGZ1bBFQ2v7owOBlberSmn-yntUfS_14Aeqz3fwP2gAmbadgMcI9zO000XgA_7rXdfrzBTmnAGSLkOp9726xxtCKf8-OgkjdudGNIO_Rmgcjb5YEV2HwJV7kTft9jrTFD2haCI6Py8Sht6AiAMQKwcKU-pItTuypAjuSihxff5IcpeAqDeRyKQDF1cJlpe_D5hrDC5SLGykrIaXdP6ZjWTG9U0YDWYacADIeObsaiuTUbKEQU32bvfz0-p1v3JJYS20PFYSxccdCsavCo2K6E_eVAgKT1EsSVc96l_uxM4Sl2jxoYo4_5py65cKpSsv2osfCvu31LKZ6TvkRFZ8rm6MYeJx0OX5ASiiRAqmBCl2LYr6eFqnbmdyFb5mFNHVTvSTPHY5jt1HG3je2IOXdgtWMP8G7q7Gv-22JUF0q1QCjqPOxz-KClk-UDCKkgKZQVT4m0RB26q3McGHzUYUpHQThP1vA8A555MhyUevz5UHTinjzib8rtGHKn3_J1geGrYobhpy0yTOJ_UHE_pnUP-bxMYPRyJpKf-DNZbdvo99q_C47Jp38WD5fg4wgmJvjoWhI3KU04CabrE4Pl9VuXDFu4R5p8xLNSzp28QrG-G6nb6ZQ3YNZdrId4sOqlS-kNUhscX0eQzRRJoLc6ih5c3v24uoMks8OFhhhJzw2NgRlijgrR2cxgjsYXFYbu3OfMNXywyA3Ds",
-            "Java": "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=249553_4d245f941845490c91360409ecffb3b4",
-            "Logitech G HUB": "https://download01.logi.com/web/ftp/pub/techsupport/gaming/lghub_installer.exe",
-            "Modrinth": "https://launcher-files.modrinth.com/versions/0.6.3/windows/Modrinth%20App_0.6.3_x64_en-US.msi",
-            "Oculus": "https://www.oculus.com/download_app/?id=1582076955407037",
-            "Parsec": "https://s3.amazonaws.com/parsec-build/package/parsec-windows.exe",
-            "ProtonVPN": "https://protonvpn.com/download/ProtonVPN_v3.2.10.exe",
-            "Rockstar Games": "https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe",
-            "Steam": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe",
-            "Streamlabs": "https://streamlabs.com/streamlabs-desktop/download?sdb=0",
-            "Wemod": "https://www.wemod.com/download/direct",
-            "Winrar": "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-700fr.exe",
-            "Davinci Resolve (manual)": "https://www.blackmagicdesign.com/fr/products/davinciresolve", # Installation manuel
-            "HWINFO (manual)": "https://www.hwinfo.com/download/", # Installation manuel
-            "NVIDIA App (manual)": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe", # Instalationl manuel
-            "NVIDIA GeForce NOW (manual)": "https://download.nvidia.com/gfnpc/GeForceNOW-release.exe", # Installation manuel
-            "Voicemod (manual)": "https://www.voicemod.net/", # Installation manuel
-            "Authentificator (Extension)": "https://chrome.google.com/webstore/detail/authenticator/bhghoamapcdpbohphigoooaddinpkbai", # Extension
-            "Buster - Captcha Solver (Extension)": "https://chrome.google.com/webstore/detail/buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl/related", # Extension
-            "Dark Reader (Extension)": "https://chrome.google.com/webstore/detail/dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh", # Extension
-            "Google Traduction (Extension)": "https://chrome.google.com/webstore/detail/google-translate/aapbdbdomjkkjkaonfhkkikfgjllcleb", # Extension
-            "Hower Zoom+ (Extension)": "https://chrome.google.com/webstore/detail/hover-zoom%2B/pccckmaobkjjboncdfnnofkonhgpceea", # Extension
-            "Return YouTube Dislike (Extension)": "https://chrome.google.com/webstore/detail/return-youtube-dislike/gebbhagfogifgggkldgodflihgfeippi", # Extension
-            "SponsorBlock (Extension)": "https://chrome.google.com/webstore/detail/sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone", # Extension
-            "Steam Inventory Helper (Extension)": "https://chrome.google.com/webstore/detail/steam-inventory-helper/cmeakgjggjdlcpncigglobpjbkabhmjl", # Extension
-            "Twitch Live (Extension)": "https://chrome.google.com/webstore/detail/twitch-live-extension/nlnfdlcbnpafokhpjfffmoobbejpedgj", # Extension
-            "Volume Booster (Extension)": "https://chromewebstore.google.com/detail/buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl", # Extension
-            "Visual Studio Code (Microsoft)": "ms-windows-store://pdp?hl=en-us&gl=us&productid=xp9khm4bk9fz7q&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
-            "Microsoft PowerToys (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&productid=xp89dcgq3k6vld&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
-            "Pichon (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid=9nk8t1kshffr&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
-            "Wintoys (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid=9p8ltpgcbzxd&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
-            "Office (Microsoft)": "ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid=9wzdncrd29v9&mode=mini&pos=7%2C2%2C1922%2C922", # Micosoft
+            "Brave": {"url": "https://laptop-updates.brave.com/latest/winx64"},
+            "Discord": {"url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64"},
+            "Google Drive": {"url": "https://dl.google.com/drive-file-stream/GoogleDriveSetup.exe"},
+            "Epic Games": {"url": "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi"},
+            "Git": {"url": "https://github.com/git-for-windows/git/releases/download/v2.44.0.windows.1/Git-2.44.0-64-bit.exe"},
+            "GOG Galaxy": {"url": "https://webinstallers.gog-statics.com/download/GOG_Galaxy_2.0.exe?payload=aKB7F3BHw5NoN2YWknDMijQCYnKgHNmiuE-ZQH5qOFwqEprfTG4XR9vIgNeGZ1bBFQ2v7owOBlberSmn-yntUfS_14Aeqz3fwP2gAmbadgMcI9zO000XgA_7rXdfrzBTmnAGSLkOp9726xxtCKf8-OgkjdudGNIO_Rmgcjb5YEV2HwJV7kTft9jrTFD2haCI6Py8Sht6AiAMQKwcKU-pItTuypAjuSihxff5IcpeAqDeRyKQDF1cJlpe_D5hrDC5SLGykrIaXdP6ZjWTG9U0YDWYacADIeObsaiuTUbKEQU32bvfz0-p1v3JJYS20PFYSxccdCsavCo2K6E_eVAgKT1EsSVc96l_uxM4Sl2jxoYo4_5py65cKpSsv2osfCvu31LKZ6TvkRFZ8rm6MYeJx0OX5ASiiRAqmBCl2LYr6eFqnbmdyFb5mFNHVTvSTPHY5jt1HG3je2IOXdgtWMP8G7q7Gv-22JUF0q1QCjqPOxz-KClk-UDCKkgKZQVT4m0RB26q3McGHzUYUpHQThP1vA8A555MhyUevz5UHTinjzib8rtGHKn3_J1geGrYobhpy0yTOJ_UHE_pnUP-bxMYPRyJpKf-DNZbdvo99q_C47Jp38WD5fg4wgmJvjoWhI3KU04CabrE4Pl9VuXDFu4R5p8xLNSzp28QrG-G6nb6ZQ3YNZdrId4sOqlS-kNUhscX0eQzRRJoLc6ih5c3v24uoMks8OFhhhJzw2NgRlijgrR2cxgjsYXFYbu3OfMNXywyA3Ds"},
+            "Java": {"url": "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=249553_4d245f941845490c91360409ecffb3b4"},
+            "Logitech G HUB": {"url": "https://download01.logi.com/web/ftp/pub/techsupport/gaming/lghub_installer.exe"},
+            "Modrinth": {"url": "https://launcher-files.modrinth.com/versions/0.6.3/windows/Modrinth%20App_0.6.3_x64_en-US.msi"},
+            "Oculus": {"url": "https://www.oculus.com/download_app/?id=1582076955407037"},
+            "Parsec": {"url": "https://s3.amazonaws.com/parsec-build/package/parsec-windows.exe"},
+            "ProtonVPN": {"url": "https://protonvpn.com/download/ProtonVPN_v3.2.10.exe"},
+            "Rockstar Games": {"url": "https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe"},
+            "Steam": {"url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe"},
+            "Streamlabs": {"url": "https://streamlabs.com/streamlabs-desktop/download?sdb=0"},
+            "Wemod": {"url": "https://www.wemod.com/download/direct"},
+            "Winrar": {"url": "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-700fr.exe"},
+            "Davinci Resolve (manual)": {"url": "https://www.blackmagicdesign.com/fr/products/davinciresolve"},
+            "HWINFO (manual)": {"url": "https://www.hwinfo.com/download/"},
+            "NVIDIA App (manual)": {"url": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe"},
+            "NVIDIA GeForce NOW (manual)": {"url": "https://download.nvidia.com/gfnpc/GeForceNOW-release.exe"},
+            "Voicemod (manual)": {"url": "https://www.voicemod.net/"},
+            "Authentificator": {"url": extension_url("authenticator/bhghoamapcdpbohphigoooaddinpkbai"), "type": "extension"},
+            "Buster - Captcha Solver": {"url": extension_url("buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl/related"), "type": "extension"},
+            "Dark Reader": {"url": extension_url("dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh"), "type": "extension"},
+            "Google Traduction": {"url": extension_url("google-translate/aapbdbdomjkkjkaonfhkkikfgjllcleb"), "type": "extension"},
+            "Hower Zoom+": {"url": extension_url("hover-zoom%2B/pccckmaobkjjboncdfnnofkonhgpceea"), "type": "extension"},
+            "Return YouTube Dislike": {"url": extension_url("return-youtube-dislike/gebbhagfogifgggkldgodflihgfeippi"), "type": "extension"},
+            "SponsorBlock": {"url": extension_url("sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone"), "type": "extension"},
+            "Steam Inventory Helper": {"url": extension_url("steam-inventory-helper/cmeakgjggjdlcpncigglobpjbkabhmjl"), "type": "extension"},
+            "Twitch Live": {"url": extension_url("twitch-live-extension/nlnfdlcbnpafokhpjfffmoobbejpedgj"), "type": "extension"},
+            "Volume Booster": {"url": extension_url("buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl"), "type": "extension"},
+            "Visual Studio Code": {"url": Store_url("xp9khm4bk9fz7q"), "type": "microsoft"},
+            "Microsoft PowerToys": {"url": Store_url("xp89dcgq3k6vld"), "type": "microsoft"},
+            "Pichon": {"url": Store_url("9nk8t1kshffr"), "type": "microsoft"},
+            "Wintoys": {"url": Store_url("9p8ltpgcbzxd"), "type": "microsoft"},
+            "Office": {"url": Store_url("9wzdncrd29v9"), "type": "microsoft"},
         }
         self.setup_ui()
 
@@ -104,17 +108,18 @@ class AppInstaller(QWidget):
         self.column2_checkboxes = []
         self.column3_checkboxes = []
 
-        for app in self.applications:
+        for app, details in self.applications.items():
+            app_type = self.get_application_type(details)
             checkbox = QCheckBox(app)
-            if "(manual)" in app:
+            if "manual" in app:
                 checkbox.setStyleSheet("color: purple")
                 column1.addWidget(checkbox)
                 self.column1_checkboxes.append(checkbox)
-            elif "(Extension)" in app:
+            elif app_type == "extension":
                 checkbox.setStyleSheet("color: green")
                 column2.addWidget(checkbox)
                 self.column2_checkboxes.append(checkbox)
-            elif "(Microsoft)" in app:
+            elif app_type == "microsoft":
                 checkbox.setStyleSheet("color: blue")
                 column3.addWidget(checkbox)
                 self.column3_checkboxes.append(checkbox)
@@ -144,6 +149,9 @@ class AppInstaller(QWidget):
                 checkbox.setChecked(True)
 
     #================================= INSTALLATION DES APPLICATIONS ================================
+    def get_application_type(self, app_details):
+        return app_details.get("type")
+    
     def install_applications(self):
         applications_installed = [app for app, checkbox in self.checkboxes.items() if checkbox.isChecked()]
         if not applications_installed:
@@ -152,15 +160,16 @@ class AppInstaller(QWidget):
 
         downloads_path = self.get_downloads_path()
         for app in applications_installed:
-            url = self.applications[app]
+            details = self.applications[app]
+            url = details["url"]
+            app_type = self.get_application_type(details)
             try:
-                if "(manual)" in app or "(Extension)" in app or "(Microsoft)" in app:
-                    if "(Microsoft)" in app:
+                if app_type in ['extension', 'microsoft'] or "(manual)" in app:
+                    if app_type == "microsoft":
                         QMessageBox.information(self, "Information", f"Please manually install the {app} application from the Microsoft Store.")
                     webbrowser.open(url)
                 else:
-                    file_name = f"{app}.msi" if url.endswith('.msi') else f"{app}.exe"
-                    file_path = downloads_path / file_name
+                    file_path = downloads_path / (f"{app}.msi" if url.endswith('.msi') else f"{app}.exe")
 
                     response = requests.get(url, stream=True)
                     total_size = int(response.headers.get('content-length', 0))
@@ -173,7 +182,6 @@ class AppInstaller(QWidget):
                         subprocess.Popen(["msiexec", "/i", str(file_path)], shell=True)
                     else:
                         subprocess.Popen([str(file_path)], shell=True)
-
             except Exception as e:
                 QMessageBox.critical(self, "Erreur", f"Unable to install {app} : {str(e)}")
         self.close()
@@ -185,14 +193,10 @@ class AppInstaller(QWidget):
         downloads_guid = "{374DE290-123F-4565-9164-39C4925E467B}"
         try:
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sub_key) as key:
-                # This might return a path with environment variables that need to be expanded
                 value, _ = winreg.QueryValueEx(key, downloads_guid)
-                # Expand potential environment variables in the path
                 downloads_path = os.path.expandvars(value)
-                # Convert it to a Path object and return
                 return Path(downloads_path)
         except FileNotFoundError:
-            # Fallback to the default downloads directory if the registry approach fails
             return Path.home() / "Downloads"
     #============================= END OF CHEMIN DE TELECHARGEMENT ==============================
 
