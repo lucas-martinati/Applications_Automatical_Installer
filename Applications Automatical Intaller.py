@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QMessageBox, QLabel, QSpacerItem, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton, QMessageBox, QLabel, QSpacerItem, QSizePolicy, QScrollArea
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from pathlib import Path
@@ -13,7 +13,8 @@ import os
 class AppInstaller(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Applications Automatical Intaller")
+        self.setWindowTitle("Applications Intaller")
+        self.setGeometry(700, 200, 600, 600)
         def Store_url(productid):
             return f"ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid={productid}&mode=mini&pos=7%2C2%2C1922%2C922"
         def extension_url(id):
@@ -33,7 +34,7 @@ class AppInstaller(QWidget):
             "ProtonVPN": {"url": "https://protonvpn.com/download/ProtonVPN_v3.2.10.exe"},
             "Rectify11": {"url": "https://github.com/Rectify11/Installer/releases/latest/download/Rectify11Installer.exe"},
             "Rockstar Games": {"url": "https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe"},
-            "Steam": {"url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe"},
+            "Steam ": {"url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe"},
             "Streamlabs": {"url": "https://streamlabs.com/streamlabs-desktop/download?sdb=0"},
             "Wemod": {"url": "https://www.wemod.com/download/direct"},
             "Winrar": {"url": "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-700fr.exe"},
@@ -85,14 +86,23 @@ class AppInstaller(QWidget):
 
         self.checkboxes = {}
         self.column_checkboxes = [[], [], []]  # List of lists to hold columns' checkboxes
-  
+
         for idx, title in enumerate(titles):
             column_layout = QVBoxLayout()
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_content = QWidget()
+            scroll_layout = QVBoxLayout(scroll_content)
+            scroll_area.setWidget(scroll_content)
+            column_layout.addWidget(scroll_area)
+
             select_all_button = self.create_select_all_button(idx)
             select_all_layout.addWidget(select_all_button)
 
             columns_layout.addLayout(column_layout)
             columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
+
+            self.column_checkboxes[idx] = scroll_layout
 
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
@@ -101,9 +111,8 @@ class AppInstaller(QWidget):
             checkbox.setStyleSheet(f"color: {color}")
             
             column_idx = self.get_column_index_for_app_type(app_type)
-            self.column_checkboxes[column_idx].append(checkbox)
+            self.column_checkboxes[column_idx].addWidget(checkbox)
             self.checkboxes[app] = checkbox
-            columns_layout.itemAt(column_idx * 2).addWidget(checkbox)
 
         button_layout = QHBoxLayout()
         layout.addLayout(button_layout)
@@ -137,11 +146,13 @@ class AppInstaller(QWidget):
         layout.addWidget(button)
 
     def select_all_column(self, column_checkboxes):
-        if column_checkboxes[0].isChecked():
-            for checkbox in column_checkboxes:
+        if column_checkboxes.itemAt(0).widget().isChecked():
+            for i in range(column_checkboxes.count()):
+                checkbox = column_checkboxes.itemAt(i).widget()
                 checkbox.setChecked(False)
         else:
-            for checkbox in column_checkboxes:
+            for i in range(column_checkboxes.count()):
+                checkbox = column_checkboxes.itemAt(i).widget()
                 checkbox.setChecked(True)
     #================ END OF UI ================
 
