@@ -31,6 +31,7 @@ class AppInstaller(QWidget):
             "Oculus": {"url": "https://www.oculus.com/download_app/?id=1582076955407037"},
             "Parsec": {"url": "https://s3.amazonaws.com/parsec-build/package/parsec-windows.exe"},
             "ProtonVPN": {"url": "https://protonvpn.com/download/ProtonVPN_v3.2.10.exe"},
+            "Rectify11": {"url": "https://github.com/Rectify11/Installer/releases/latest/download/Rectify11Installer.exe"},
             "Rockstar Games": {"url": "https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe"},
             "Steam": {"url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe"},
             "Streamlabs": {"url": "https://streamlabs.com/streamlabs-desktop/download?sdb=0"},
