@@ -33,7 +33,7 @@ class AppInstaller(QWidget):
             "ProtonVPN": {"url": "https://protonvpn.com/download/ProtonVPN_v3.2.10.exe"},
             "Rectify11": {"url": "https://github.com/Rectify11/Installer/releases/latest/download/Rectify11Installer.exe"},
             "Rockstar Games": {"url": "https://gamedownloads.rockstargames.com/public/installer/Rockstar-Games-Launcher.exe"},
-            "Steam": {"url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe"},
+            "Steam ": {"url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe"},
             "Streamlabs": {"url": "https://streamlabs.com/streamlabs-desktop/download?sdb=0"},
             "Wemod": {"url": "https://www.wemod.com/download/direct"},
             "Winrar": {"url": "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-700fr.exe"},
