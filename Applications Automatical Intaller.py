@@ -68,78 +68,73 @@ class AppInstaller(QWidget):
         title_font.setBold(True)
         title_font.setPointSize(12)
 
+        titles = ["Applications", "Chrome Extensions", "Microsoft Store Applications"]
         title_layout = QHBoxLayout()
-        title_layout.addWidget(QLabel("Applications", font=title_font), alignment=Qt.AlignCenter)
-        title_layout.addWidget(QLabel("Chrome Extensions", font=title_font), alignment=Qt.AlignCenter)
-        title_layout.addWidget(QLabel("Microsoft Store Applications", font=title_font), alignment=Qt.AlignCenter)
+        for title_text in titles:
+            title_label = QLabel(title_text)
+            title_label.setFont(title_font)
+            title_layout.addWidget(title_label, alignment=Qt.AlignCenter)
         layout.addLayout(title_layout)
 
         select_all_layout = QHBoxLayout()
         layout.addLayout(select_all_layout)
 
-        column1 = QVBoxLayout()
-        column2 = QVBoxLayout()
-        column3 = QVBoxLayout()
-        
-        select_all_column1_button = QPushButton("All select")
-        select_all_column1_button.clicked.connect(lambda: self.select_all_column(self.column1_checkboxes))
-        select_all_layout.addWidget(select_all_column1_button)
-
-        select_all_column2_button = QPushButton("All select")
-        select_all_column2_button.clicked.connect(lambda: self.select_all_column(self.column2_checkboxes))
-        select_all_layout.addWidget(select_all_column2_button)
-
-        select_all_column3_button = QPushButton("All select")
-        select_all_column3_button.clicked.connect(lambda: self.select_all_column(self.column3_checkboxes))
-        select_all_layout.addWidget(select_all_column3_button)
-
         columns_layout = QHBoxLayout()
         layout.addLayout(columns_layout)
 
-        columns_layout.addLayout(column1)
-        columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
-        columns_layout.addLayout(column2)
-        columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
-        columns_layout.addLayout(column3)
-        columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
-
         self.checkboxes = {}
-        self.column1_checkboxes = []
-        self.column2_checkboxes = []
-        self.column3_checkboxes = []
+        self.column_checkboxes = [[], [], []]  # List of lists to hold columns' checkboxes
+  
+        for idx, title in enumerate(titles):
+            column_layout = QVBoxLayout()
+            select_all_button = self.create_select_all_button(idx)
+            select_all_layout.addWidget(select_all_button)
+
+            columns_layout.addLayout(column_layout)
+            columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
             checkbox = QCheckBox(app)
-            if "manual" in app:
-                checkbox.setStyleSheet("color: purple")
-                column1.addWidget(checkbox)
-                self.column1_checkboxes.append(checkbox)
-            elif app_type == "extension":
-                checkbox.setStyleSheet("color: green")
-                column2.addWidget(checkbox)
-                self.column2_checkboxes.append(checkbox)
-            elif app_type == "microsoft":
-                checkbox.setStyleSheet("color: blue")
-                column3.addWidget(checkbox)
-                self.column3_checkboxes.append(checkbox)
-            else:
-                column1.addWidget(checkbox)
-                self.column1_checkboxes.append(checkbox)
-
+            color = self.get_color_for_app_type(app_type, app)
+            checkbox.setStyleSheet(f"color: {color}")
+            
+            column_idx = self.get_column_index_for_app_type(app_type)
+            self.column_checkboxes[column_idx].append(checkbox)
             self.checkboxes[app] = checkbox
+            columns_layout.itemAt(column_idx * 2).addWidget(checkbox)
 
         button_layout = QHBoxLayout()
         layout.addLayout(button_layout)
 
-        install_button = QPushButton("Install")
-        install_button.clicked.connect(self.install_applications)
-        button_layout.addWidget(install_button)
+        self.create_and_add_button("Install", self.install_applications, button_layout)
+        self.create_and_add_button("Quit", self.close, button_layout)
 
-        quit_button = QPushButton("Quit")
-        quit_button.clicked.connect(self.close)
-        button_layout.addWidget(quit_button)
-    #================ END OF UI ================
+    def create_select_all_button(self, column_index):
+        button = QPushButton("All Select")
+        button.clicked.connect(lambda: self.select_all_column(self.column_checkboxes[column_index]))
+        return button
+
+    def get_color_for_app_type(self, app_type, app_name):
+        if "manual" in app_name:
+            return 'purple'
+        if app_type =='extension':
+            return 'green'
+        if app_type == 'microsoft':
+            return 'blue'
+
+    def get_column_index_for_app_type(self, app_type):
+        if app_type == 'extension':
+            return 1
+        elif app_type == 'microsoft':
+            return 2
+        return 0
+
+    def create_and_add_button(self, text, slot, layout):
+        button = QPushButton(text)
+        button.clicked.connect(slot)
+        layout.addWidget(button)
+
     def select_all_column(self, column_checkboxes):
         if column_checkboxes[0].isChecked():
             for checkbox in column_checkboxes:
@@ -147,6 +142,7 @@ class AppInstaller(QWidget):
         else:
             for checkbox in column_checkboxes:
                 checkbox.setChecked(True)
+    #================ END OF UI ================
 
     #================================= INSTALLATION DES APPLICATIONS ================================
     def get_application_type(self, app_details):
