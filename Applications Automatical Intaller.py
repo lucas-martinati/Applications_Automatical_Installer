@@ -87,8 +87,6 @@ class AppInstaller(QWidget):
         self.checkboxes = {}
         self.column_checkboxes = [[], [], []]  # List of lists to hold columns' checkboxes
 
-        column_width = 200  # Adjust this value to change the width of the columns
-
         for idx, title in enumerate(titles):
             column_layout = QVBoxLayout()
             scroll_area = QScrollArea()
@@ -96,7 +94,7 @@ class AppInstaller(QWidget):
             scroll_content = QWidget()
             scroll_layout = QVBoxLayout(scroll_content)
             scroll_area.setWidget(scroll_content)
-            scroll_area.setFixedWidth(column_width)
+            scroll_area.setFixedWidth(230)
             column_layout.addWidget(scroll_area)
 
             select_all_button = self.create_select_all_button(idx)
