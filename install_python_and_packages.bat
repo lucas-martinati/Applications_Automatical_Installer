@@ -1,9 +1,14 @@
 @echo off
+setlocal enabledelayedexpansion
 
+REM Check if Python is already installed
 where python >nul 2>nul
 if %errorlevel% equ 0 (
-    echo Python is already installed.
-    goto :continue
+    for /f "tokens=2 delims=." %%i in ('python --version') do set python_version=%%i
+    if !python_version! geq 8 (
+        echo Python 3.8 or higher is already installed.
+        goto :install_packages
+    )
 )
 
 echo Downloading Python...
@@ -11,21 +16,29 @@ curl -o python_installer.exe https://www.python.org/ftp/python/3.12.0/python-3.1
 
 echo Installing Python...
 python_installer.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0
-del python_installer.exe
+if %errorlevel% neq 0 (
+    echo Failed to install Python.
+    goto :cleanup
+)
 
 echo Python has been successfully installed.
 
-:continue
-echo Installing requests...
-pip install requests
+:install_packages
+echo Updating pip...
+python -m pip install --upgrade pip
 
-echo The requests package has been successfully installed.
-echo Installing PyQt5...
-pip install PyQt5
+echo Installing required packages...
+pip install -r requirements.txt
+if %errorlevel% neq 0 (
+    echo Failed to install required packages.
+    goto :cleanup
+)
 
-echo The PyQt5 package has been successfully installed.
-echo Installing tqdm...
-pip install tqdm
+echo All required packages have been successfully installed.
 
-echo If only the Python download was completed, please rerun the .bat file to install the packages.
+:cleanup
+if exist python_installer.exe del python_installer.exe
+
+echo Installation process complete.
 pause
+exit /b 0
