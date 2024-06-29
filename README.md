@@ -26,5 +26,4 @@ This repository allows automatic installation of applications selected from a li
 - Wemod
 - Winrar
 
-![image](https://github.com/LucasM548/Auto-Install-Apps/assets/127530926/37cf6658-8433-4846-b8aa-0186c59122d0)
-![image](https://github.com/LucasM548/Auto-Install-Apps/assets/127530926/bca90f2f-6af8-4942-b4f6-a662165a1fc1)
+![image](https://github.com/LucasM548/Applications-Automatical-Intaller/assets/127530926/4e0c1313-4f27-4b6d-8383-41f4d7bf29d6)
