@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import logging
+import time
 from pathlib import Path
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
                              QCheckBox, QPushButton, QMessageBox, QLabel, 
@@ -13,7 +14,6 @@ import winreg
 import subprocess
 import webbrowser
 
-# Set up logging
 logging.basicConfig(filename='app_installer.log', level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -32,7 +32,7 @@ def get_url(app_details):
     return app_details['url']
 
 class DownloadThread(QThread):
-    progress_signal = pyqtSignal(int)
+    progress_signal = pyqtSignal(int, float, float, float, float)
     finished_signal = pyqtSignal(str)
 
     def __init__(self, url, file_path):
@@ -40,22 +40,37 @@ class DownloadThread(QThread):
         self.url = url
         self.file_path = file_path
         self.is_cancelled = False
+        self.start_time = None
 
     def run(self):
         try:
             response = requests.get(self.url, stream=True)
             response.raise_for_status()
             total_size = int(response.headers.get('content-length', 0))
-            block_size = 1024
+            total_size_mb = total_size / (1024 * 1024)
+            block_size = 8192
+            downloaded = 0
+            self.start_time = time.time()
+            
             with open(self.file_path, "wb") as f:
                 for data in response.iter_content(block_size):
                     if self.is_cancelled:
                         f.close()
                         os.remove(self.file_path)
                         return
-                    f.write(data)
+                    
+                    size = f.write(data)
+                    downloaded += size
+                    
                     if total_size:
-                        self.progress_signal.emit(f.tell() * 100 // total_size)
+                        percent = downloaded * 100 // total_size
+                        downloaded_mb = downloaded / (1024 * 1024)
+                        elapsed_time = time.time() - self.start_time
+                        speed = downloaded / (1024 * 1024 * elapsed_time) if elapsed_time > 0 else 0
+                        eta = (total_size - downloaded) / (speed * 1024 * 1024) if speed > 0 else 0
+                        
+                        self.progress_signal.emit(percent, total_size_mb, downloaded_mb, speed, eta)
+            
             self.finished_signal.emit(self.file_path)
         except Exception as e:
             logging.error(f"Download failed: {str(e)}")
@@ -241,8 +256,19 @@ class AppInstaller(QWidget):
         self.progress_bar = QProgressBar()
         layout.addWidget(self.progress_bar)
 
+        # Labels - informations de téléchargement
         self.current_app_label = QLabel()
-        layout.addWidget(self.current_app_label)
+        self.file_size_label = QLabel()
+        self.speed_label = QLabel()
+        self.eta_label = QLabel()
+        
+        info_layout = QHBoxLayout()
+        info_layout.addWidget(self.current_app_label)
+        info_layout.addWidget(self.file_size_label)
+        info_layout.addWidget(self.speed_label)
+        info_layout.addWidget(self.eta_label)
+        
+        layout.addLayout(info_layout)
 
     def create_select_all_button(self, column_index):
         button = QPushButton("Select All")
@@ -294,8 +320,11 @@ class AppInstaller(QWidget):
             self.installation_manager.add_to_queue(app, details, downloads_path)
         self.update_button_states()
 
-    def update_progress(self, value):
-        self.progress_bar.setValue(value)
+    def update_progress(self, percent, total_size_mb, downloaded_mb, speed, eta):
+        self.progress_bar.setValue(percent)
+        self.file_size_label.setText(f"Total size: {downloaded_mb:.2f}/{total_size_mb:.2f}MB")
+        self.speed_label.setText(f"Speed: {speed:.2f}MB/s")
+        self.eta_label.setText(f"ETA: {eta:.0f}s")
 
     def update_button_states(self):
         self.install_button.setEnabled(False)
@@ -311,11 +340,17 @@ class AppInstaller(QWidget):
     def on_installation_started(self, app):
         self.update_button_states()
         self.current_app_label.setText(f"Installing: {app}")
+        self.file_size_label.setText("Total size: -")
+        self.speed_label.setText("Speed: -")
+        self.eta_label.setText("ETA: -")
 
     def on_installation_finished(self):
         self.update_button_states()
         self.progress_bar.setValue(0)
         self.current_app_label.setText("")
+        self.file_size_label.setText("")
+        self.speed_label.setText("")
+        self.eta_label.setText("")
 
     def get_downloads_path(self):
         sub_key = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
