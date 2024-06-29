@@ -154,14 +154,14 @@ class AppInstaller(QWidget):
         self.installation_manager.installation_finished.connect(self.on_installation_finished)
 
     def load_applications(self):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        json_path = os.path.join(script_dir, 'applications.json')
+
         try:
-            with open('applications.json', 'r') as f:
+            with open(json_path, 'r') as f:
                 self.applications = json.load(f)
-            for app, details in self.applications.items():
-                if 'type' in details:
-                    details['url'] = get_url(details)
         except FileNotFoundError:
-            logging.error("applications.json not found. Using default applications.")
+            logging.error(f"applications.json not found at {json_path}. Using default applications.")
             self.applications = self.get_default_applications()
 
     def get_default_applications(self):
