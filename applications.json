@@ -2,7 +2,7 @@
     "Brave": {"url": "https://laptop-updates.brave.com/latest/winx64"},
     "Discord": {"url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64"},
     "Google Drive": {"url": "https://dl.google.com/drive-file-stream/GoogleDriveSetup.exe"},
-    "Epic Games": {"url": "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi"},
+    "Epic Games": {"url": "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi"},
     "Git": {"url": "https://github.com/git-for-windows/git/releases/download/v2.44.0.windows.1/Git-2.44.0-64-bit.exe"},
     "GOG Galaxy": {"url": "https://webinstallers.gog-statics.com/download/GOG_Galaxy_2.0.exe?payload=aKB7F3BHw5NoN2YWknDMijQCYnKgHNmiuE-ZQH5qOFwqEprfTG4XR9vIgNeGZ1bBFQ2v7owOBlberSmn-yntUfS_14Aeqz3fwP2gAmbadgMcI9zO000XgA_7rXdfrzBTmnAGSLkOp9726xxtCKf8-OgkjdudGNIO_Rmgcjb5YEV2HwJV7kTft9jrTFD2haCI6Py8Sht6AiAMQKwcKU-pItTuypAjuSihxff5IcpeAqDeRyKQDF1cJlpe_D5hrDC5SLGykrIaXdP6ZjWTG9U0YDWYacADIeObsaiuTUbKEQU32bvfz0-p1v3JJYS20PFYSxccdCsavCo2K6E_eVAgKT1EsSVc96l_uxM4Sl2jxoYo4_5py65cKpSsv2osfCvu31LKZ6TvkRFZ8rm6MYeJx0OX5ASiiRAqmBCl2LYr6eFqnbmdyFb5mFNHVTvSTPHY5jt1HG3je2IOXdgtWMP8G7q7Gv-22JUF0q1QCjqPOxz-KClk-UDCKkgKZQVT4m0RB26q3McGHzUYUpHQThP1vA8A555MhyUevz5UHTinjzib8rtGHKn3_J1geGrYobhpy0yTOJ_UHE_pnUP-bxMYPRyJpKf-DNZbdvo99q_C47Jp38WD5fg4wgmJvjoWhI3KU04CabrE4Pl9VuXDFu4R5p8xLNSzp28QrG-G6nb6ZQ3YNZdrId4sOqlS-kNUhscX0eQzRRJoLc6ih5c3v24uoMks8OFhhhJzw2NgRlijgrR2cxgjsYXFYbu3OfMNXywyA3Ds"},
     "Java": {"url": "https://javadl.oracle.com/webapps/download/AutoDL?BundleId=249553_4d245f941845490c91360409ecffb3b4"},

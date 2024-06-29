@@ -298,9 +298,8 @@ class AppInstaller(QWidget):
         self.progress_bar.setValue(value)
 
     def update_button_states(self):
-        has_queue = bool(self.installation_manager.queue)
-        self.install_button.setEnabled(not has_queue)
-        self.cancel_button.setEnabled(has_queue)
+        self.install_button.setEnabled(False)
+        self.cancel_button.setEnabled(True)
 
     def cancel_installation(self):
         self.installation_manager.cancel_current_installation()
