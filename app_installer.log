@@ -1,0 +1,68 @@
+2024-06-29 02:07:34,996 - INFO - Started installation of Wemod
+2024-06-29 02:09:02,401 - INFO - Started installation of Brave
+2024-06-29 02:15:29,185 - INFO - Started installation of GOG Galaxy
+2024-06-29 02:15:39,474 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:15:39,475 - ERROR - Failed to download Epic Games
+2024-06-29 02:15:44,784 - INFO - Started installation of GOG Galaxy
+2024-06-29 02:17:11,133 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:17:11,133 - ERROR - Failed to download Epic Games
+2024-06-29 02:17:41,315 - INFO - Started installation of Git
+2024-06-29 02:17:52,242 - INFO - Started installation of Steam 
+2024-06-29 02:18:13,669 - INFO - Started installation of Brave
+2024-06-29 02:18:20,007 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:18:20,007 - ERROR - Failed to download Epic Games
+2024-06-29 02:18:23,042 - INFO - Started installation of GOG Galaxy
+2024-06-29 02:18:37,154 - INFO - Started installation of Logitech G HUB
+2024-06-29 02:18:38,804 - INFO - Started installation of Modrinth
+2024-06-29 02:18:42,098 - INFO - Started installation of Oculus
+2024-06-29 02:18:44,199 - INFO - Started installation of Parsec
+2024-06-29 02:18:59,665 - INFO - Started installation of ProtonVPN
+2024-06-29 02:22:32,149 - INFO - Started installation of Java
+2024-06-29 02:22:40,029 - INFO - Started installation of Logitech G HUB
+2024-06-29 02:22:41,940 - INFO - Started installation of Modrinth
+2024-06-29 02:23:05,701 - INFO - Started installation of Brave
+2024-06-29 02:24:26,846 - INFO - Started installation of Brave
+2024-06-29 02:24:33,236 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:24:33,236 - ERROR - Failed to download Epic Games
+2024-06-29 02:24:57,190 - INFO - Started installation of Brave
+2024-06-29 02:25:06,799 - INFO - Started installation of Brave
+2024-06-29 02:25:22,145 - INFO - Started installation of Brave
+2024-06-29 02:25:27,629 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:25:27,629 - ERROR - Failed to download Epic Games
+2024-06-29 02:25:42,875 - INFO - Started installation of Brave
+2024-06-29 02:25:48,020 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:25:48,021 - ERROR - Failed to download Epic Games
+2024-06-29 02:26:06,002 - INFO - Started installation of Brave
+2024-06-29 02:26:30,191 - INFO - Started installation of Brave
+2024-06-29 02:26:35,715 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:26:35,715 - ERROR - Failed to download Epic Games
+2024-06-29 02:26:51,993 - INFO - Started installation of Brave
+2024-06-29 02:26:56,207 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:26:56,208 - ERROR - Failed to download Epic Games
+2024-06-29 02:27:13,001 - INFO - Started installation of Brave
+2024-06-29 02:27:15,788 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:27:15,789 - ERROR - Failed to download Epic Games
+2024-06-29 02:31:35,234 - INFO - Started installation of Brave
+2024-06-29 02:33:31,997 - INFO - Started installation of Brave
+2024-06-29 02:33:47,515 - INFO - Started installation of Brave
+2024-06-29 02:35:55,564 - INFO - Started installation of Brave
+2024-06-29 02:36:06,916 - INFO - Started installation of Brave
+2024-06-29 02:36:12,300 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:36:12,301 - ERROR - Failed to download Epic Games
+2024-06-29 02:39:20,393 - INFO - Started installation of Brave
+2024-06-29 02:40:09,514 - INFO - Started installation of Brave
+2024-06-29 02:41:05,007 - INFO - Started installation of Brave
+2024-06-29 02:41:13,267 - INFO - Started installation of Brave
+2024-06-29 02:41:16,190 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:41:16,190 - ERROR - Failed to download Epic Games
+2024-06-29 02:41:31,138 - ERROR - Download failed: [Errno 13] Permission denied: 'D:\\Users\\Lucas_M54\\Téléchargements\\Brave.exe'
+2024-06-29 02:41:31,138 - ERROR - Failed to download Brave
+2024-06-29 02:41:37,112 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:41:37,112 - ERROR - Failed to download Epic Games
+2024-06-29 02:41:39,560 - INFO - Started installation of GOG Galaxy
+2024-06-29 02:44:46,115 - INFO - Started installation of Brave
+2024-06-29 02:45:43,127 - INFO - Started installation of Brave
+2024-06-29 02:45:46,293 - ERROR - Download failed: 404 Client Error: Not Found for url: https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncerInstaller.msi
+2024-06-29 02:45:46,293 - ERROR - Failed to download Epic Games
+2024-06-29 02:45:48,881 - INFO - Started installation of GOG Galaxy
+2024-06-29 02:48:03,573 - INFO - Started installation of ProtonVPN
