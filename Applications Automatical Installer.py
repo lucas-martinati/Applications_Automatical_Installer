@@ -31,6 +31,7 @@ def get_url(app_details):
             return extension_url(app_details['id'])
     return app_details['url']
 
+#=================== DOWNLOAD STATS ===================
 class DownloadThread(QThread):
     progress_signal = pyqtSignal(int, float, float, float, float)
     finished_signal = pyqtSignal(str)
@@ -78,7 +79,9 @@ class DownloadThread(QThread):
 
     def cancel(self):
         self.is_cancelled = True
+#=================== END OF DOWNLOAD STATS ===================
 
+#=================== INSTALL APPLICATIONS ===================
 class InstallationManager(QObject):
     installation_complete = pyqtSignal()
     installation_started = pyqtSignal(str)
@@ -140,8 +143,10 @@ class InstallationManager(QObject):
             self.current_thread = None
             self.current_app = ""
             self.process_next()
+#=================== END OF INSTALL APPLICATIONS ===================
 
 class AppInstaller(QWidget):
+    #=================== LOAD APPLICATIONS ===================
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Applications Installer")
@@ -183,7 +188,9 @@ class AppInstaller(QWidget):
             "Visual Studio Code": {"url": store_url("xp9khm4bk9fz7q"), "type": "microsoft"},
             "Office": {"url": store_url("9wzdncrd29v9"), "type": "microsoft"},
         }
+    #=================== LOAD APPLICATIONS ===================
 
+    #=================== UI ===================
     def setup_ui(self):
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -300,7 +307,9 @@ class AppInstaller(QWidget):
         for i in range(column_checkboxes.count()):
             checkbox = column_checkboxes.itemAt(i).widget()
             checkbox.setChecked(check_state)
+    #================ END OF UI ================
 
+    #================================= INSTALL APPLICATIONS ================================
     def get_application_type(self, app_details):
         return app_details.get("type", "")
 
@@ -351,7 +360,9 @@ class AppInstaller(QWidget):
         self.file_size_label.setText("")
         self.speed_label.setText("")
         self.eta_label.setText("")
+    #============================= END OF INSTALL APPLICATIONS ==============================
 
+    #================================= DOWNLOAD PATH ================================
     def get_downloads_path(self):
         sub_key = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
         downloads_guid = "{374DE290-123F-4565-9164-39C4925E467B}"
@@ -362,6 +373,7 @@ class AppInstaller(QWidget):
                 return Path(downloads_path)
         except FileNotFoundError:
             return Path.home() / "Downloads"
+    #============================= END OF DOWNLOAD PATH ==============================
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
