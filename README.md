@@ -26,4 +26,25 @@ This repository allows automatic installation of applications selected from a li
 - Wemod
 - Winrar
 
+## 📱 Chrome extensions
+
+- Authentificator
+- Buster - Captcha Solver
+- Dark Reader
+- Google Traduction
+- Hower Zoom+
+- Return YouTube Dislike
+- SponsorBlock
+- Steam Inventory Helper
+- Twitch Live
+- Volume Master
+
+## 📱 Microsoft Store applications
+
+- Visual Studio Code
+- Microsoft PowerToys
+- Pichon
+- Wintoys
+- Office
+
 ![image](https://github.com/LucasM548/Applications-Automatical-Intaller/assets/127530926/4e0c1313-4f27-4b6d-8383-41f4d7bf29d6)
