@@ -26,7 +26,7 @@ This repository allows automatic installation of applications selected from a li
 - Wemod
 - Winrar
 
-## 📱 Extensions Navigator
+## 📱 Chrome extensions
 
 - Authentificator
 - Buster - Captcha Solver
