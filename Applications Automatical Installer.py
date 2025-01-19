@@ -14,7 +14,7 @@ import winreg
 import subprocess
 import webbrowser
 
-logging.basicConfig(filename='app_installer.log', level=logging.INFO, 
+logging.basicConfig(filename='app_installer.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 def store_url(productid):
@@ -52,26 +52,26 @@ class DownloadThread(QThread):
             block_size = 8192
             downloaded = 0
             self.start_time = time.time()
-            
+
             with open(self.file_path, "wb") as f:
                 for data in response.iter_content(block_size):
                     if self.is_cancelled:
                         f.close()
                         os.remove(self.file_path)
                         return
-                    
+
                     size = f.write(data)
                     downloaded += size
-                    
+
                     if total_size:
                         percent = downloaded * 100 // total_size
                         downloaded_mb = downloaded / (1024 * 1024)
                         elapsed_time = time.time() - self.start_time
                         speed = downloaded / (1024 * 1024 * elapsed_time) if elapsed_time > 0 else 0
                         eta = (total_size - downloaded) / (speed * 1024 * 1024) if speed > 0 else 0
-                        
+
                         self.progress_signal.emit(percent, total_size_mb, downloaded_mb, speed, eta)
-            
+
             self.finished_signal.emit(self.file_path)
         except Exception as e:
             logging.error(f"Download failed: {str(e)}")
@@ -132,7 +132,7 @@ class InstallationManager(QObject):
         else:
             logging.error(f"Failed to download {app}")
             QMessageBox.critical(None, "Error", f"Failed to download {app}")
-        
+
         self.current_thread = None
         self.current_app = ""
         self.process_next()
@@ -240,7 +240,7 @@ class AppInstaller(QWidget):
             checkbox = QCheckBox(app)
             color = self.get_color_for_app_type(app_type, app)
             checkbox.setStyleSheet(f"color: {color}")
-            
+
             column_idx = self.get_column_index_for_app_type(app_type)
             self.column_checkboxes[column_idx].addWidget(checkbox)
             self.checkboxes[app] = checkbox
@@ -250,7 +250,7 @@ class AppInstaller(QWidget):
 
         self.install_button = QPushButton("Install")
         self.install_button.clicked.connect(self.install_informations)
-        
+
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.cancel_installation)
         self.cancel_button.setEnabled(False)
@@ -268,13 +268,13 @@ class AppInstaller(QWidget):
         self.file_size_label = QLabel()
         self.speed_label = QLabel()
         self.eta_label = QLabel()
-        
+
         info_layout = QHBoxLayout()
         info_layout.addWidget(self.current_app_label)
         info_layout.addWidget(self.file_size_label)
         info_layout.addWidget(self.speed_label)
         info_layout.addWidget(self.eta_label)
-        
+
         layout.addLayout(info_layout)
 
     def create_select_all_button(self, column_index):
