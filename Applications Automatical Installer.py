@@ -176,7 +176,7 @@ class AppInstaller(QWidget):
             "Google Drive": {"url": "https://dl.google.com/drive-file-stream/GoogleDriveSetup.exe"},
             "Epic Games": {"url": "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi"},
             "Git": {"url": "https://github.com/git-for-windows/git/releases/download/v2.44.0.windows.1/Git-2.44.0-64-bit.exe"},
-            "Steam ": {"url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe"},
+            "Steam": {"url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe"},
             "Winrar": {"url": "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-700fr.exe"},
             "HWINFO (manual)": {"url": "https://www.hwinfo.com/download/"},
             "NVIDIA App (manual)": {"url": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe"},
