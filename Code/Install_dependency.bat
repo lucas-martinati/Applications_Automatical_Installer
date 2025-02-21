@@ -7,7 +7,7 @@ if %errorlevel% equ 0 (
     for /f "tokens=2 delims=." %%i in ('python --version') do set python_version=%%i
     if !python_version! geq 8 (
         echo Python 3.8 or higher is already installed.
-        goto :install_packages
+        goto :setup_venv
     )
 )
 
@@ -23,7 +23,21 @@ if %errorlevel% neq 0 (
 
 echo Python has been successfully installed.
 
-:install_packages
+:setup_venv
+echo Creating virtual environment...
+python -m venv venv
+if %errorlevel% neq 0 (
+    echo Failed to create virtual environment.
+    goto :cleanup
+)
+
+echo Activating virtual environment...
+call venv\Scripts\activate.bat
+if %errorlevel% neq 0 (
+    echo Failed to activate virtual environment.
+    goto :cleanup
+)
+
 echo Updating pip...
 python -m pip install --upgrade pip
 

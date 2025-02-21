@@ -1,10 +1,34 @@
 ## 🔽 Installation
+**Note:** Installation is only necessary if you intend to modify the source code.
 
-Run the `install_python_and_packages` BAT file, then you need to restart it to be able to install the packages (unless Python was already installed).
+1. **Install Python and Required Packages**:
 
-## 🤔 Explications
+   -Run the `install_python_and_packages.bat` file. This script will install Python (if not already installed) and the necessary packages.
+   -After execution, restart the script to ensure all packages are properly installed.
 
-This repository allows automatic installation of applications selected from a list (which can be easily expanded). Each installation of each application will be carried out and launched in administrator mode (to avoid any conflicts), and they will be stored in the Windows 'Downloads' folder. Please note, however, that some applications like "Nvidia App" or "Davinci Resolve" do not work (because they require connections during installation or otherwise). Once checked, they will lead to the website where you can install them. All applications presenting this problem are marked with “(Manual)” in their name and will be in Purple, in addition you will be able to find a list of extensions which will also lead to their site.
+## 🚀 Usage
+
+- **Standard Usage on Windows**:
+
+   Simply execute the provided `Applications_Automatical_Installer.exe` file to launch the application.
+
+- **Modifying the Python Code**:
+
+   If you wish to modify the source code, run the corresponding `Install_dependency.bat` script to set up the development environment.
+
+- **Recompiling the Python Script into an Executable**:
+
+   After making changes to the code, use the following command to generate a new executable:
+    ```
+    pyinstaller --onefile --windowed --add-data "applications.json;." Applications-Automatical-Installer.py
+    ```
+    This command creates a standalone executable from your Python script, including the necessary `applications.json` file.
+
+## 🤔 Explanation
+
+This repository facilitates the automatic installation of selected applications from an easily extendable list. Each application is installed with administrative privileges to prevent conflicts, and the installation files are saved in the Windows 'Downloads' folder.
+
+Please note that certain applications, such as "Nvidia App" or "Davinci Resolve," require an active internet connection during installation and cannot be installed automatically. For these, the script will redirect you to the official website for manual installation. These applications are labeled as “(Manual)” and highlighted in purpe. Additionally, a list of extensions is provided, directing you to their respective sites.
 
 ## 📱 Applications
 
@@ -28,11 +52,11 @@ This repository allows automatic installation of applications selected from a li
 
 ## 📱 Chrome extensions
 
-- Authentificator
+- Authenticator
 - Buster - Captcha Solver
 - Dark Reader
 - Google Traduction
-- Hower Zoom+
+- Hover Zoom+
 - Return YouTube Dislike
 - SponsorBlock
 - Steam Inventory Helper

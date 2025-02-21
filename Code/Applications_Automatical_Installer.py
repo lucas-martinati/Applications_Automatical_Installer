@@ -4,8 +4,8 @@ import json
 import logging
 import time
 from pathlib import Path
-from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, 
-                             QCheckBox, QPushButton, QMessageBox, QLabel, 
+from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
+                             QCheckBox, QPushButton, QMessageBox, QLabel,
                              QSpacerItem, QSizePolicy, QScrollArea, QProgressBar)
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject
