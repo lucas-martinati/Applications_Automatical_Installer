@@ -72,4 +72,4 @@ Please note that certain applications, such as "Nvidia App" or "Davinci Resolve,
 - Wintoys
 - Office
 
-![image](https://github.com/LucasM548/Applications-Automatical-Intaller/assets/127530926/4e0c1313-4f27-4b6d-8383-41f4d7bf29d6)
+![image](https://github.com/user-attachments/assets/84e37193-f74a-4178-ba29-e74090392ba0)
