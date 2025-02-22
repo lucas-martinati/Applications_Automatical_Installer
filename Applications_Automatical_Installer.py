@@ -4,10 +4,10 @@ import json
 import logging
 import time
 from pathlib import Path
-from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
-                             QCheckBox, QPushButton, QMessageBox, QLabel,
-                             QSpacerItem, QSizePolicy, QScrollArea, QProgressBar)
-from PyQt5.QtGui import QFont, QIcon, QPixmap, QFont, QIcon, QPixmap, QPainter
+from functools import partial
+from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton,
+                             QMessageBox, QLabel, QSpacerItem, QSizePolicy, QScrollArea, QProgressBar)
+from PyQt5.QtGui import QFont, QIcon, QPixmap, QPainter
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject, QSize
 from PyQt5.QtSvg import QSvgRenderer
 import requests
@@ -25,26 +25,25 @@ def extension_url(id):
     return f"https://chromewebstore.google.com/detail/{id}"
 
 def get_url(app_details):
-    if 'type' in app_details:
-        if app_details['type'] == 'microsoft':
-            return store_url(app_details['productid'])
-        elif app_details['type'] == 'extension':
-            return extension_url(app_details['id'])
-    return app_details['url']
+    if app_details.get('type') == 'microsoft':
+        return store_url(app_details['productid'])
+    elif app_details.get('type') == 'extension':
+        return extension_url(app_details['id'])
+    return app_details.get('url')
 
 def load_svg_logo(url, size):
     """Télécharge un logo SVG depuis une URL et le convertit en QPixmap de la taille indiquée."""
     try:
-        response = requests.get(url)
-        response.raise_for_status()
-        svg_data = response.content
-        renderer = QSvgRenderer(svg_data)
-        pixmap = QPixmap(size)
-        pixmap.fill(Qt.transparent)
-        painter = QPainter(pixmap)
-        renderer.render(painter)
-        painter.end()
-        return pixmap
+        with requests.get(url) as response:
+            response.raise_for_status()
+            svg_data = response.content
+            renderer = QSvgRenderer(svg_data)
+            pixmap = QPixmap(size)
+            pixmap.fill(Qt.transparent)
+            painter = QPainter(pixmap)
+            renderer.render(painter)
+            painter.end()
+            return pixmap
     except Exception as e:
         logging.error(f"Erreur lors du chargement du logo SVG depuis {url}: {e}")
         return None
@@ -59,13 +58,14 @@ class ClickableCheckBox(QCheckBox):
             event.accept()
         else:
             super().keyPressEvent(event)
+
 #=================== DOWNLOAD STATS ===================
 class DownloadThread(QThread):
     progress_signal = pyqtSignal(int, float, float, float, float)
     finished_signal = pyqtSignal(str)
 
     def __init__(self, url, file_path):
-        QThread.__init__(self)
+        super().__init__()
         self.url = url
         self.file_path = file_path
         self.is_cancelled = False
@@ -73,32 +73,32 @@ class DownloadThread(QThread):
 
     def run(self):
         try:
-            response = requests.get(self.url, stream=True)
-            response.raise_for_status()
-            total_size = int(response.headers.get('content-length', 0))
-            total_size_mb = total_size / (1024 * 1024)
-            block_size = 8192
-            downloaded = 0
-            self.start_time = time.time()
+            with requests.get(self.url, stream=True) as response:
+                response.raise_for_status()
+                total_size = int(response.headers.get('content-length', 0))
+                total_size_mb = total_size / (1024 * 1024)
+                block_size = 8192
+                downloaded = 0
+                self.start_time = time.time()
 
-            with open(self.file_path, "wb") as f:
-                for data in response.iter_content(block_size):
-                    if self.is_cancelled:
-                        f.close()
-                        os.remove(self.file_path)
-                        return
+                with open(self.file_path, "wb") as f:
+                    for data in response.iter_content(block_size):
+                        if self.is_cancelled:
+                            f.close()
+                            os.remove(self.file_path)
+                            return
 
-                    size = f.write(data)
-                    downloaded += size
+                        size = f.write(data)
+                        downloaded += size
 
-                    if total_size:
-                        percent = downloaded * 100 // total_size
-                        downloaded_mb = downloaded / (1024 * 1024)
-                        elapsed_time = time.time() - self.start_time
-                        speed = downloaded / (1024 * 1024 * elapsed_time) if elapsed_time > 0 else 0
-                        eta = (total_size - downloaded) / (speed * 1024 * 1024) if speed > 0 else 0
+                        if total_size:
+                            percent = downloaded * 100 // total_size
+                            downloaded_mb = downloaded / (1024 * 1024)
+                            elapsed_time = time.time() - self.start_time
+                            speed = downloaded / (1024 * 1024 * elapsed_time) if elapsed_time > 0 else 0
+                            eta = (total_size - downloaded) / (speed * 1024 * 1024) if speed > 0 else 0
 
-                        self.progress_signal.emit(percent, total_size_mb, downloaded_mb, speed, eta)
+                            self.progress_signal.emit(percent, total_size_mb, downloaded_mb, speed, eta)
 
             self.finished_signal.emit(self.file_path)
         except Exception as e:
@@ -127,23 +127,24 @@ class InstallationManager(QObject):
             self.process_next()
 
     def process_next(self):
-        if self.queue:
+        while self.queue:
             app, details, downloads_path = self.queue.pop(0)
             self.current_app = app
             url = get_url(details)
             app_type = details.get("type", "")
-
-            if app_type in ['extension', 'microsoft'] or "(manual)" in app:
+            if "(manual)" in app or app_type in ['extension', 'microsoft']:
                 webbrowser.open(url)
-                QMessageBox.information(None, "Information", f"Please manually install {app} from the opened web page.")
-                self.process_next()
+                QMessageBox.information(None, "Information", f"Veuillez installer manuellement {app} depuis la page ouverte.")
+                continue
             else:
-                file_path = downloads_path / (f"{app}.msi" if url.endswith('.msi') else f"{app}.exe")
+                file_ext = ".msi" if url.endswith('.msi') else ".exe"
+                file_path = downloads_path / f"{app}{file_ext}"
                 self.current_thread = DownloadThread(url, str(file_path))
                 self.current_thread.progress_signal.connect(self.parent().update_progress)
-                self.current_thread.finished_signal.connect(lambda fp, a=app: self.install_application(fp, a))
+                self.current_thread.finished_signal.connect(partial(self.install_application, app=app))
                 self.installation_started.emit(app)
                 self.current_thread.start()
+                break
         else:
             self.installation_finished.emit()
             self.installation_complete.emit()
@@ -174,7 +175,6 @@ class InstallationManager(QObject):
 #=================== END OF INSTALL APPLICATIONS ===================
 
 class AppInstaller(QWidget):
-    #=================== LOAD APPLICATIONS ===================
     def __init__(self):
         super().__init__()
         self.setStyleSheet("""
@@ -310,7 +310,7 @@ class AppInstaller(QWidget):
         QCheckBox[type="extension"] { color: #58A6FF; }
         QCheckBox[type="microsoft"] { color: #DB61A2; }
         QCheckBox[type="manual"] { color: #D29922; }
-    """)
+        """)
         self.setWindowTitle("Applications Installer")
         self.setGeometry(700, 200, 800, 600)
         self.load_applications()
@@ -323,35 +323,30 @@ class AppInstaller(QWidget):
     def load_applications(self):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         json_path = os.path.join(script_dir, 'applications.json')
-
         try:
             with open(json_path, 'r') as f:
                 self.applications = json.load(f)
         except FileNotFoundError:
-            logging.error(f"applications.json not found at {json_path}. Using default applications.")
+            logging.error(f"applications.json non trouvé à {json_path}. Utilisation des applications par défaut.")
             self.applications = self.get_default_applications()
 
     def get_default_applications(self):
         return {
-            "Brave": {"url": "https://laptop-updates.brave.com/latest/winx64", "logo": "https://logodownload.org/wp-content/uploads/2022/04/brave-logo-1.png"},
-            "Discord": {"url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64", "logo": "logos/discord.png"},
-            "HWINFO (manual)": {"url": "https://www.hwinfo.com/download/", "logo": "logos/hwinfo.png"},
-            "NVIDIA App (manual)": {"url": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe", "logo": "logos/nvidia.png"},
+            "Brave": {"url": "https://laptop-updates.brave.com/latest/winx64", "logo": "https://img.icons8.com/?size=100&id=cM42lftaD9Z3&format=png&color=000000"},
+            "Discord": {"url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64", "logo": "https://img.icons8.com/color/2x/discord"},
+            "HWINFO (manual)": {"url": "https://www.hwinfo.com/download/", "logo": "https://www.hwinfo.com/wp-content/themes/hwinfo/img/logo-sm.png"},
+            "NVIDIA App (manual)": {"url": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe", "logo": "https://img.icons8.com/color/512/nvidia.png"},
             "Dark Reader": {"url": extension_url("dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh"), "type": "extension", "logo": "logos/dark_reader.png"},
             "Google Traduction": {"url": extension_url("google-translate/aapbdbdomjkkjkaonfhkkikfgjllcleb"), "type": "extension", "logo": "logos/google_translate.png"},
         }
 
-    #=================== LOAD APPLICATIONS ===================
-
-    #=================== UI ===================
     def setup_ui(self):
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        layout = QVBoxLayout(self)
 
+        # Titres
         title_font = QFont()
         title_font.setBold(True)
         title_font.setPointSize(12)
-
         titles = ["Applications", "Chrome Extensions", "Microsoft Store Applications"]
         title_layout = QHBoxLayout()
         for title_text in titles:
@@ -360,14 +355,17 @@ class AppInstaller(QWidget):
             title_layout.addWidget(title_label, alignment=Qt.AlignCenter)
         layout.addLayout(title_layout)
 
+        # Boutons "Select All"
         select_all_layout = QHBoxLayout()
         layout.addLayout(select_all_layout)
 
+        # Colonnes de cases à cocher
         columns_layout = QHBoxLayout()
         layout.addLayout(columns_layout)
 
         self.checkboxes = {}
-        self.column_checkboxes = [[], [], []]
+        self.column_checkboxes = [None] * len(titles)
+        self.select_buttons = {}
 
         for idx, title in enumerate(titles):
             column_layout = QVBoxLayout()
@@ -385,33 +383,31 @@ class AppInstaller(QWidget):
             columns_layout.addLayout(column_layout)
             if idx < len(titles) - 1:
                 columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
-
             self.column_checkboxes[idx] = scroll_layout
 
-        # Création des cases à cocher avec logo si disponible
+        # Création des cases à cocher avec logo (si disponible)
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
             checkbox = ClickableCheckBox(app)
             logo_link = details.get("logo")
             if logo_link:
-                # Si le lien est une URL distante et se termine par ".svg" (ou si vous savez qu'il s'agit de Simple Icons)
-                if logo_link.startswith("http") and logo_link.lower().endswith(".svg"):
-                    pixmap = load_svg_logo(logo_link, QSize(24, 24))
-                    if pixmap:
-                        checkbox.setIcon(QIcon(pixmap))
-                        checkbox.setIconSize(QSize(24, 24))
-                # Sinon, pour des images classiques (PNG, etc.)
-                elif logo_link.startswith("http"):
-                    try:
-                        response = requests.get(logo_link)
-                        response.raise_for_status()
-                        image_data = response.content
-                        pixmap = QPixmap()
-                        if pixmap.loadFromData(image_data):
+                if logo_link.startswith("http"):
+                    if logo_link.lower().endswith(".svg"):
+                        pixmap = load_svg_logo(logo_link, QSize(24, 24))
+                        if pixmap:
                             checkbox.setIcon(QIcon(pixmap))
                             checkbox.setIconSize(QSize(24, 24))
-                    except Exception as e:
-                        logging.error(f"Échec du chargement de l'image distante pour {app}: {e}")
+                    else:
+                        try:
+                            response = requests.get(logo_link)
+                            response.raise_for_status()
+                            image_data = response.content
+                            pixmap = QPixmap()
+                            if pixmap.loadFromData(image_data):
+                                checkbox.setIcon(QIcon(pixmap))
+                                checkbox.setIconSize(QSize(24, 24))
+                        except Exception as e:
+                            logging.error(f"Échec du chargement de l'image distante pour {app}: {e}")
                 elif os.path.exists(logo_link):
                     checkbox.setIcon(QIcon(logo_link))
                     checkbox.setIconSize(QSize(24, 24))
@@ -419,21 +415,17 @@ class AppInstaller(QWidget):
                 app_type = "manual"
             checkbox.setProperty("type", app_type)
             column_idx = self.get_column_index_for_app_type(app_type)
-            checkbox.toggled.connect(lambda checked, col=column_idx: self.update_select_all_button(col))
+            checkbox.toggled.connect(partial(self.update_select_all_button, column_index=column_idx))
             self.column_checkboxes[column_idx].addWidget(checkbox)
             self.checkboxes[app] = checkbox
 
+        # Boutons d'installation et d'annulation
         button_layout = QHBoxLayout()
-        layout.addLayout(button_layout)
-
         self.install_button = QPushButton("Install")
         self.install_button.clicked.connect(self.install_informations)
-
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.cancel_installation)
         self.cancel_button.setEnabled(False)
-
-        button_layout = QHBoxLayout()
         button_layout.addWidget(self.install_button)
         button_layout.addWidget(self.cancel_button)
         layout.addLayout(button_layout)
@@ -441,45 +433,37 @@ class AppInstaller(QWidget):
         self.progress_bar = QProgressBar()
         layout.addWidget(self.progress_bar)
 
-        # Labels - informations de téléchargement
+        # Informations de téléchargement
         self.current_app_label = QLabel()
         self.file_size_label = QLabel()
         self.speed_label = QLabel()
         self.eta_label = QLabel()
-
         info_layout = QHBoxLayout()
         info_layout.addWidget(self.current_app_label)
         info_layout.addWidget(self.file_size_label)
         info_layout.addWidget(self.speed_label)
         info_layout.addWidget(self.eta_label)
-
         layout.addLayout(info_layout)
 
     def create_select_all_button(self, column_index):
         button = QPushButton("Select All")
-        button.clicked.connect(lambda _, col=column_index: self.toggle_select_column(col))
-        if not hasattr(self, 'select_buttons'):
-            self.select_buttons = {}
+        button.clicked.connect(partial(self.toggle_select_column, column_index=column_index))
         self.select_buttons[column_index] = button
         return button
 
     def toggle_select_column(self, column_index):
         layout = self.column_checkboxes[column_index]
         any_checked = any(layout.itemAt(i).widget().isChecked() for i in range(layout.count()))
-        new_state = False if any_checked else True
+        new_state = not any_checked
         for i in range(layout.count()):
-            checkbox = layout.itemAt(i).widget()
-            checkbox.setChecked(new_state)
+            layout.itemAt(i).widget().setChecked(new_state)
         self.update_select_all_button(column_index)
 
     def update_select_all_button(self, column_index):
         layout = self.column_checkboxes[column_index]
         any_checked = any(layout.itemAt(i).widget().isChecked() for i in range(layout.count()))
         button = self.select_buttons[column_index]
-        if any_checked:
-            button.setText("Deselect All")
-        else:
-            button.setText("Select All")
+        button.setText("Deselect All" if any_checked else "Select All")
 
     def get_column_index_for_app_type(self, app_type):
         if app_type == 'extension':
@@ -488,13 +472,6 @@ class AppInstaller(QWidget):
             return 2
         return 0
 
-    def create_and_add_button(self, text, slot, layout):
-        button = QPushButton(text)
-        button.clicked.connect(slot)
-        layout.addWidget(button)
-    #================ END OF UI ================
-
-    #================================= INSTALL APPLICATIONS ================================
     def get_application_type(self, app_details):
         if "(manual)" in app_details.get("url", ""):
             return "manual"
@@ -534,22 +511,20 @@ class AppInstaller(QWidget):
         self.close()
 
     def on_installation_started(self, app):
-        self.update_button_states()
         self.current_app_label.setText(f"Installing: {app}")
         self.file_size_label.setText("Total size: -")
         self.speed_label.setText("Speed: -")
         self.eta_label.setText("ETA: -")
+        self.update_button_states()
 
     def on_installation_finished(self):
-        self.update_button_states()
         self.progress_bar.setValue(0)
         self.current_app_label.setText("")
         self.file_size_label.setText("")
         self.speed_label.setText("")
         self.eta_label.setText("")
-    #============================= END OF INSTALL APPLICATIONS ==============================
+        # À la fin, on peut fermer l'application ou réactiver le bouton d'installation selon le besoin
 
-    #================================= DOWNLOAD PATH ================================
     def get_downloads_path(self):
         sub_key = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
         downloads_guid = "{374DE290-123F-4565-9164-39C4925E467B}"
@@ -560,7 +535,6 @@ class AppInstaller(QWidget):
                 return Path(downloads_path)
         except FileNotFoundError:
             return Path.home() / "Downloads"
-    #============================= END OF DOWNLOAD PATH ==============================
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
