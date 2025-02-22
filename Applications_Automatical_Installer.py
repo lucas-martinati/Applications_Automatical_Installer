@@ -149,6 +149,136 @@ class AppInstaller(QWidget):
     #=================== LOAD APPLICATIONS ===================
     def __init__(self):
         super().__init__()
+        self.setStyleSheet("""
+        QWidget {
+            background-color: #0D1117;
+            color: #C9D1D9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* Titres */
+        QLabel[objectName^="title"] {
+            font-size: 16px;
+            font-weight: 600;
+            color: #58A6FF;
+            padding: 15px 0;
+            border-bottom: 2px solid #30363D;
+        }
+
+        /* Cases à cocher */
+        QCheckBox {
+            spacing: 10px;
+            padding: 6px;
+            background: #161B22;
+            border-radius: 6px;
+            margin: 2px 0;
+        }
+        QCheckBox::indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #30363D;
+            border-radius: 4px;
+        }
+        QCheckBox::indicator:checked {
+            background-color: #238636;
+            image: url(qml/checked.svg);
+        }
+
+        /* Boutons */
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #238636, stop:1 #2EA043);
+            border: 1px solid #2EA043;
+            border-radius: 6px;
+            padding: 10px 25px;
+            color: white;
+            font-weight: 600;
+            min-width: 120px;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #2EA043, stop:1 #3FBA58);
+        }
+        QPushButton:pressed {
+            background: #238636;
+        }
+        QPushButton:disabled {
+            background: #484F58;
+            border-color: #6E7681;
+        }
+
+        /* Barre de progression */
+        QProgressBar {
+            background: #161B22;
+            border: 1px solid #30363D;
+            border-radius: 8px;
+            height: 24px;
+            text-align: center;
+            font-weight: 500;
+        }
+        QProgressBar::chunk {
+            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                stop:0 #2EA043, stop:1 #3FBA58);
+            border-radius: 7px;
+            margin: 2px;
+        }
+
+        /* Zones de défilement */
+        QScrollArea {
+            border: 3px solid #30363D;
+            border-radius: 5px;
+            background: transparent;
+        }
+        QScrollBar:vertical {
+            background: transparent;
+            width: 7px;
+            margin: 0;
+        }
+        QScrollBar::handle:vertical {
+            background: #30363D;
+            min-height: 20px;
+            border-radius: 6px;
+        }
+
+        QScrollBar:horizontal {
+            background: transparent;
+            width: 7px;
+            margin: 0;
+        }
+        QScrollBar::handle:horizontal {
+            background: #30363D;
+            min-height: 20px;
+            border-radius: 6px;
+        }
+
+        /* Étiquettes d'information */
+        QLabel#infoLabel {
+            font-size: 13px;
+            color: #8B949E;
+            padding: 6px 10px;
+            background: #161B22;
+            border-radius: 4px;
+        }
+
+        /* Fenêtres de message */
+        QMessageBox {
+            background: #0D1117;
+            border: 1px solid #30363D;
+        }
+        QMessageBox QLabel {
+            color: #C9D1D9;
+            font-size: 14px;
+        }
+        QMessageBox QPushButton {
+            min-width: 80px;
+            padding: 8px 16px;
+        }
+
+        /* Couleurs spécifiques aux types */
+        QCheckBox[type="extension"] { color: #58A6FF; }
+        QCheckBox[type="microsoft"] { color: #DB61A2; }
+        QCheckBox[type="manual"] { color: #D29922; }
+    """)
         self.setWindowTitle("Applications Installer")
         self.setGeometry(700, 200, 800, 600)
         self.load_applications()
@@ -173,20 +303,10 @@ class AppInstaller(QWidget):
         return {
             "Brave": {"url": "https://laptop-updates.brave.com/latest/winx64"},
             "Discord": {"url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64"},
-            "Google Drive": {"url": "https://dl.google.com/drive-file-stream/GoogleDriveSetup.exe"},
-            "Epic Games": {"url": "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi"},
-            "Git": {"url": "https://github.com/git-for-windows/git/releases/download/v2.44.0.windows.1/Git-2.44.0-64-bit.exe"},
-            "Steam": {"url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe"},
-            "Winrar": {"url": "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-700fr.exe"},
             "HWINFO (manual)": {"url": "https://www.hwinfo.com/download/"},
             "NVIDIA App (manual)": {"url": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe"},
             "Dark Reader": {"url": extension_url("dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh"), "type": "extension"},
             "Google Traduction": {"url": extension_url("google-translate/aapbdbdomjkkjkaonfhkkikfgjllcleb"), "type": "extension"},
-            "Hower Zoom+": {"url": extension_url("hover-zoom%2B/pccckmaobkjjboncdfnnofkonhgpceea"), "type": "extension"},
-            "Return YouTube Dislike": {"url": extension_url("return-youtube-dislike/gebbhagfogifgggkldgodflihgfeippi"), "type": "extension"},
-            "SponsorBlock": {"url": extension_url("sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone"), "type": "extension"},
-            "Visual Studio Code": {"url": store_url("xp9khm4bk9fz7q"), "type": "microsoft"},
-            "Office": {"url": store_url("9wzdncrd29v9"), "type": "microsoft"},
         }
     #=================== LOAD APPLICATIONS ===================
 
@@ -238,9 +358,9 @@ class AppInstaller(QWidget):
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
             checkbox = QCheckBox(app)
-            color = self.get_color_for_app_type(app_type, app)
-            checkbox.setStyleSheet(f"color: {color}")
-
+            if "(manual)" in app:
+                app_type = "manual"
+            checkbox.setProperty("type", app_type)
             column_idx = self.get_column_index_for_app_type(app_type)
             self.column_checkboxes[column_idx].addWidget(checkbox)
             self.checkboxes[app] = checkbox
@@ -282,14 +402,6 @@ class AppInstaller(QWidget):
         button.clicked.connect(lambda: self.select_all_column(self.column_checkboxes[column_index]))
         return button
 
-    def get_color_for_app_type(self, app_type, app_name):
-        if "manual" in app_name:
-            return 'purple'
-        if app_type == 'extension':
-            return 'green'
-        if app_type == 'microsoft':
-            return 'blue'
-
     def get_column_index_for_app_type(self, app_type):
         if app_type == 'extension':
             return 1
@@ -311,6 +423,8 @@ class AppInstaller(QWidget):
 
     #================================= INSTALL APPLICATIONS ================================
     def get_application_type(self, app_details):
+        if "(manual)" in app_details.get("url", ""):
+            return "manual"
         return app_details.get("type", "")
 
     def install_informations(self):

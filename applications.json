@@ -23,7 +23,7 @@
     "NVIDIA GeForce NOW (manual)": {"url": "https://download.nvidia.com/gfnpc/GeForceNOW-release.exe"},
     "Voicemod (manual)": {"url": "https://www.voicemod.net/"},
 
-    "Authentificator": {"id": "authenticator/bhghoamapcdpbohphigoooaddinpkbai", "type": "extension"},
+    "Authenticator": {"id": "authenticator/bhghoamapcdpbohphigoooaddinpkbai", "type": "extension"},
     "Buster - Captcha Solver": {"id": "buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl", "type": "extension"},
     "Dark Reader": {"id": "eimadpbcbfnmbkopoojfekhnkhdbieeh", "type": "extension"},
     "Google Traduction": {"id": "aapbdbdomjkkjkaonfhkkikfgjllcleb", "type": "extension"},
