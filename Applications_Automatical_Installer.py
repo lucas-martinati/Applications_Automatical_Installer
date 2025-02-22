@@ -31,6 +31,9 @@ def get_url(app_details):
             return extension_url(app_details['id'])
     return app_details['url']
 
+class ClickableCheckBox(QCheckBox):
+    def hitButton(self, pos):
+        return self.rect().contains(pos)
 #=================== DOWNLOAD STATS ===================
 class DownloadThread(QThread):
     progress_signal = pyqtSignal(int, float, float, float, float)
@@ -361,7 +364,7 @@ class AppInstaller(QWidget):
 
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
-            checkbox = QCheckBox(app)
+            checkbox = ClickableCheckBox(app)
             if "(manual)" in app:
                 app_type = "manual"
             checkbox.setProperty("type", app_type)
