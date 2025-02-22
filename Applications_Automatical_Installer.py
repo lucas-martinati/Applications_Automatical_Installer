@@ -174,14 +174,18 @@ class AppInstaller(QWidget):
             margin: 2px 0;
         }
         QCheckBox::indicator {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border: 2px solid #30363D;
             border-radius: 4px;
         }
         QCheckBox::indicator:checked {
-            background-color: #238636;
-            image: url(qml/checked.svg);
+            background: qradialgradient(cx: 0.5, cy: 0.5, radius: 0.6,
+                                        fx: 0.5, fy: 0.5,
+                                        stop: 0 #3FBA58,
+                                        stop: 1 #238636);
+            border: 2px solid #2EA043;
+            border-radius: 4px;
         }
 
         /* Boutons */
