@@ -399,7 +399,8 @@ class AppInstaller(QWidget):
 
     def create_select_all_button(self, column_index):
         button = QPushButton("Select All")
-        button.clicked.connect(lambda: self.select_all_column(self.column_checkboxes[column_index]))
+        # On passe la référence du bouton et l'indice de la colonne
+        button.clicked.connect(lambda _, btn=button, idx=column_index: self.select_all_column(self.column_checkboxes[idx], btn))
         return button
 
     def get_column_index_for_app_type(self, app_type):
@@ -414,11 +415,26 @@ class AppInstaller(QWidget):
         button.clicked.connect(slot)
         layout.addWidget(button)
 
-    def select_all_column(self, column_checkboxes):
-        check_state = not column_checkboxes.itemAt(0).widget().isChecked()
-        for i in range(column_checkboxes.count()):
-            checkbox = column_checkboxes.itemAt(i).widget()
-            checkbox.setChecked(check_state)
+    def select_all_column(self, column_layout, button):
+        # Vérifie si toutes les cases de la colonne sont cochées
+        all_checked = True
+        for i in range(column_layout.count()):
+            checkbox = column_layout.itemAt(i).widget()
+            if not checkbox.isChecked():
+                all_checked = False
+                break
+
+        # Si toutes sont cochées, on décoche toutes, sinon on coche toutes
+        new_state = not all_checked
+        for i in range(column_layout.count()):
+            checkbox = column_layout.itemAt(i).widget()
+            checkbox.setChecked(new_state)
+
+        # Met à jour le texte du bouton en fonction de l'action effectuée
+        if new_state:
+            button.setText("Deselect All")
+        else:
+            button.setText("Select All")
     #================ END OF UI ================
 
     #================================= INSTALL APPLICATIONS ================================
