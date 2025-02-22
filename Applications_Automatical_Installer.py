@@ -7,8 +7,9 @@ from pathlib import Path
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                              QCheckBox, QPushButton, QMessageBox, QLabel,
                              QSpacerItem, QSizePolicy, QScrollArea, QProgressBar)
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject
+from PyQt5.QtGui import QFont, QIcon, QPixmap, QFont, QIcon, QPixmap, QPainter
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject, QSize
+from PyQt5.QtSvg import QSvgRenderer
 import requests
 import winreg
 import subprocess
@@ -30,6 +31,23 @@ def get_url(app_details):
         elif app_details['type'] == 'extension':
             return extension_url(app_details['id'])
     return app_details['url']
+
+def load_svg_logo(url, size):
+    """Télécharge un logo SVG depuis une URL et le convertit en QPixmap de la taille indiquée."""
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        svg_data = response.content
+        renderer = QSvgRenderer(svg_data)
+        pixmap = QPixmap(size)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        renderer.render(painter)
+        painter.end()
+        return pixmap
+    except Exception as e:
+        logging.error(f"Erreur lors du chargement du logo SVG depuis {url}: {e}")
+        return None
 
 class ClickableCheckBox(QCheckBox):
     def hitButton(self, pos):
@@ -315,13 +333,14 @@ class AppInstaller(QWidget):
 
     def get_default_applications(self):
         return {
-            "Brave": {"url": "https://laptop-updates.brave.com/latest/winx64"},
-            "Discord": {"url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64"},
-            "HWINFO (manual)": {"url": "https://www.hwinfo.com/download/"},
-            "NVIDIA App (manual)": {"url": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe"},
-            "Dark Reader": {"url": extension_url("dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh"), "type": "extension"},
-            "Google Traduction": {"url": extension_url("google-translate/aapbdbdomjkkjkaonfhkkikfgjllcleb"), "type": "extension"},
+            "Brave": {"url": "https://laptop-updates.brave.com/latest/winx64", "logo": "https://logodownload.org/wp-content/uploads/2022/04/brave-logo-1.png"},
+            "Discord": {"url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64", "logo": "logos/discord.png"},
+            "HWINFO (manual)": {"url": "https://www.hwinfo.com/download/", "logo": "logos/hwinfo.png"},
+            "NVIDIA App (manual)": {"url": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe", "logo": "logos/nvidia.png"},
+            "Dark Reader": {"url": extension_url("dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh"), "type": "extension", "logo": "logos/dark_reader.png"},
+            "Google Traduction": {"url": extension_url("google-translate/aapbdbdomjkkjkaonfhkkikfgjllcleb"), "type": "extension", "logo": "logos/google_translate.png"},
         }
+
     #=================== LOAD APPLICATIONS ===================
 
     #=================== UI ===================
@@ -369,18 +388,40 @@ class AppInstaller(QWidget):
 
             self.column_checkboxes[idx] = scroll_layout
 
+        # Création des cases à cocher avec logo si disponible
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
             checkbox = ClickableCheckBox(app)
+            logo_link = details.get("logo")
+            if logo_link:
+                # Si le lien est une URL distante et se termine par ".svg" (ou si vous savez qu'il s'agit de Simple Icons)
+                if logo_link.startswith("http") and logo_link.lower().endswith(".svg"):
+                    pixmap = load_svg_logo(logo_link, QSize(24, 24))
+                    if pixmap:
+                        checkbox.setIcon(QIcon(pixmap))
+                        checkbox.setIconSize(QSize(24, 24))
+                # Sinon, pour des images classiques (PNG, etc.)
+                elif logo_link.startswith("http"):
+                    try:
+                        response = requests.get(logo_link)
+                        response.raise_for_status()
+                        image_data = response.content
+                        pixmap = QPixmap()
+                        if pixmap.loadFromData(image_data):
+                            checkbox.setIcon(QIcon(pixmap))
+                            checkbox.setIconSize(QSize(24, 24))
+                    except Exception as e:
+                        logging.error(f"Échec du chargement de l'image distante pour {app}: {e}")
+                elif os.path.exists(logo_link):
+                    checkbox.setIcon(QIcon(logo_link))
+                    checkbox.setIconSize(QSize(24, 24))
             if "(manual)" in app:
                 app_type = "manual"
             checkbox.setProperty("type", app_type)
             column_idx = self.get_column_index_for_app_type(app_type)
-            # Connexion pour mettre à jour le texte du bouton quand la checkbox change
             checkbox.toggled.connect(lambda checked, col=column_idx: self.update_select_all_button(col))
             self.column_checkboxes[column_idx].addWidget(checkbox)
             self.checkboxes[app] = checkbox
-
 
         button_layout = QHBoxLayout()
         layout.addLayout(button_layout)
@@ -439,7 +480,6 @@ class AppInstaller(QWidget):
             button.setText("Deselect All")
         else:
             button.setText("Select All")
-
 
     def get_column_index_for_app_type(self, app_type):
         if app_type == 'extension':
