@@ -34,6 +34,13 @@ def get_url(app_details):
 class ClickableCheckBox(QCheckBox):
     def hitButton(self, pos):
         return self.rect().contains(pos)
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            self.toggle()
+            event.accept()
+        else:
+            super().keyPressEvent(event)
 #=================== DOWNLOAD STATS ===================
 class DownloadThread(QThread):
     progress_signal = pyqtSignal(int, float, float, float, float)
