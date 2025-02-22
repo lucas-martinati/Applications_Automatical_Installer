@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                              QCheckBox, QPushButton, QMessageBox, QLabel,
-                             QSpacerItem, QSizePolicy, QScrollArea, QProgressBar, )
+                             QSpacerItem, QSizePolicy, QScrollArea, QProgressBar)
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject
 import requests
@@ -31,16 +31,6 @@ def get_url(app_details):
             return extension_url(app_details['id'])
     return app_details['url']
 
-class ClickableCheckBox(QCheckBox):
-    def hitButton(self, pos):
-        return self.rect().contains(pos)
-
-    def keyPressEvent(self, event):
-        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
-            self.toggle()
-            event.accept()
-        else:
-            super().keyPressEvent(event)
 #=================== DOWNLOAD STATS ===================
 class DownloadThread(QThread):
     progress_signal = pyqtSignal(int, float, float, float, float)
@@ -288,12 +278,6 @@ class AppInstaller(QWidget):
             padding: 8px 16px;
         }
 
-        QCheckBox:focus, QPushButton:focus {
-            border: 2px dashed #238636;
-            border-radius: 6px;
-            padding: 4px;
-        }
-
         /* Couleurs spécifiques aux types */
         QCheckBox[type="extension"] { color: #58A6FF; }
         QCheckBox[type="microsoft"] { color: #DB61A2; }
@@ -377,8 +361,7 @@ class AppInstaller(QWidget):
 
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
-            checkbox = ClickableCheckBox(app)
-            checkbox.setFocusPolicy(Qt.StrongFocus)
+            checkbox = QCheckBox(app)
             if "(manual)" in app:
                 app_type = "manual"
             checkbox.setProperty("type", app_type)
@@ -423,7 +406,6 @@ class AppInstaller(QWidget):
 
     def create_select_all_button(self, column_index):
         button = QPushButton("Select All")
-        button.setFocusPolicy(Qt.StrongFocus)
         button.clicked.connect(lambda _, col=column_index: self.toggle_select_column(col))
         if not hasattr(self, 'select_buttons'):
             self.select_buttons = {}
