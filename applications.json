@@ -128,8 +128,7 @@
   },
   "Steam Inventory Helper": {
     "id": "steam-inventory-helper/cmeakgjggjdlcpncigglobpjbkabhmjl",
-    "type": "extension",
-    "logo": "https://lh3.googleusercontent.com/CadrS32EDKBEsKQlULmRC8QFkSwq3Cht4KLP86K6zgeaeJIVipdaQyLAv-UIyi63qFx8GbvnvrptvmxBtfSecWGV-g=s128-rj-sc0x00ffffff"
+    "type": "extension"
   },
   "Twitch Live": {
     "id": "twitch-live-extension/nlnfdlcbnpafokhpjfffmoobbejpedgj",
