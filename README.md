@@ -20,8 +20,7 @@
 
    After making changes to the code, use the following command to generate a new executable:
     ```
-    Code\venv\Scripts\activate
-    cd Code
+    venv\Scripts\activate
     pyinstaller --onefile --windowed --add-data "applications.json;." Applications_Automatical_Installer.py
     ```
     This command creates a standalone executable from your Python script, including the necessary `applications.json` file.

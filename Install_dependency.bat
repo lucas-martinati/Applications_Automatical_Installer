@@ -42,7 +42,7 @@ echo Updating pip...
 python -m pip install --upgrade pip
 
 echo Installing required packages...
-pip install -r Code/requirements.txt
+pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo Failed to install required packages.
     goto :cleanup
