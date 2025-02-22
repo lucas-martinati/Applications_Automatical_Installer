@@ -6,8 +6,8 @@ import time
 from pathlib import Path
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout,
                              QCheckBox, QPushButton, QMessageBox, QLabel,
-                             QSpacerItem, QSizePolicy, QScrollArea, QProgressBar)
-from PyQt5.QtGui import QFont
+                             QSpacerItem, QSizePolicy, QScrollArea, QProgressBar, )
+from PyQt5.QtGui import QFont, QPainter, QPen
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject
 import requests
 import winreg
@@ -34,6 +34,13 @@ def get_url(app_details):
 class ClickableCheckBox(QCheckBox):
     def hitButton(self, pos):
         return self.rect().contains(pos)
+
+    def keyPressEvent(self, event):
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            self.toggle()
+            event.accept()
+        else:
+            super().keyPressEvent(event)
 #=================== DOWNLOAD STATS ===================
 class DownloadThread(QThread):
     progress_signal = pyqtSignal(int, float, float, float, float)
@@ -281,6 +288,12 @@ class AppInstaller(QWidget):
             padding: 8px 16px;
         }
 
+        QCheckBox:focus, QPushButton:focus {
+            border: 2px dashed #238636;
+            border-radius: 6px;
+            padding: 4px;
+        }
+
         /* Couleurs spécifiques aux types */
         QCheckBox[type="extension"] { color: #58A6FF; }
         QCheckBox[type="microsoft"] { color: #DB61A2; }
@@ -365,6 +378,7 @@ class AppInstaller(QWidget):
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
             checkbox = ClickableCheckBox(app)
+            checkbox.setFocusPolicy(Qt.StrongFocus)
             if "(manual)" in app:
                 app_type = "manual"
             checkbox.setProperty("type", app_type)
@@ -409,7 +423,7 @@ class AppInstaller(QWidget):
 
     def create_select_all_button(self, column_index):
         button = QPushButton("Select All")
-        # Au clic, on appelle toggle_select_column en précisant le numéro de colonne
+        button.setFocusPolicy(Qt.StrongFocus)
         button.clicked.connect(lambda _, col=column_index: self.toggle_select_column(col))
         if not hasattr(self, 'select_buttons'):
             self.select_buttons = {}
@@ -418,21 +432,17 @@ class AppInstaller(QWidget):
 
     def toggle_select_column(self, column_index):
         layout = self.column_checkboxes[column_index]
-        # Vérifie s'il y a au moins une case cochée
         any_checked = any(layout.itemAt(i).widget().isChecked() for i in range(layout.count()))
-        # Si une ou plusieurs cases sont cochées, on les décoche toutes ; sinon, on les coche toutes
         new_state = False if any_checked else True
         for i in range(layout.count()):
             checkbox = layout.itemAt(i).widget()
             checkbox.setChecked(new_state)
-        # Mise à jour du texte du bouton après changement
         self.update_select_all_button(column_index)
 
     def update_select_all_button(self, column_index):
         layout = self.column_checkboxes[column_index]
         any_checked = any(layout.itemAt(i).widget().isChecked() for i in range(layout.count()))
         button = self.select_buttons[column_index]
-        # Si au moins une case est cochée, le bouton passe en "Deselect All"
         if any_checked:
             button.setText("Deselect All")
         else:
