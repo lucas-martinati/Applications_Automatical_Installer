@@ -1,24 +1,156 @@
+#!/usr/bin/env python3
 import sys
 import os
 import json
 import logging
 import time
+import subprocess
+import webbrowser
 from pathlib import Path
 from functools import partial
-from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton,
-                             QMessageBox, QLabel, QSpacerItem, QSizePolicy, QScrollArea, QProgressBar)
+from urllib.parse import urlparse
+
+import requests
+import winreg
+
+from PyQt5.QtWidgets import (
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton,
+    QMessageBox, QLabel, QSpacerItem, QSizePolicy, QScrollArea, QProgressBar
+)
 from PyQt5.QtGui import QFont, QIcon, QPixmap, QPainter, QImage, QPainterPath
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject, QSize
 from PyQt5.QtSvg import QSvgRenderer
-import requests
-import winreg
-import subprocess
-import webbrowser
-from urllib.parse import urlparse
 
 logging.basicConfig(filename='app_installer.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
+# ------------------- CONSTANTES & FEUILLE DE STYLE -------------------
+STYLE_SHEET = """
+QWidget {
+    background-color: #0D1117;
+    color: #C9D1D9;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Titres */
+QLabel[objectName^="title"] {
+    font-size: 16px;
+    font-weight: 600;
+    color: #58A6FF;
+    padding: 15px 0;
+    border-bottom: 2px solid #30363D;
+}
+
+/* Cases à cocher */
+QCheckBox {
+    spacing: 10px;
+    padding: 6px;
+    background: #161B22;
+    border-radius: 6px;
+    margin: 2px 0;
+}
+QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #30363D;
+    border-radius: 4px;
+}
+QCheckBox::indicator:checked {
+    background: qradialgradient(cx: 0.5, cy: 0.5, radius: 0.6,
+                                fx: 0.5, fy: 0.5,
+                                stop: 0 #3FBA58,
+                                stop: 1 #238636);
+    border: 2px solid #2EA043;
+    border-radius: 4px;
+}
+
+/* Boutons */
+QPushButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #238636, stop:1 #2EA043);
+    border: 1px solid #2EA043;
+    border-radius: 6px;
+    padding: 10px 25px;
+    color: white;
+    font-weight: 600;
+    min-width: 120px;
+}
+QPushButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #2EA043, stop:1 #3FBA58);
+}
+QPushButton:pressed {
+    background: #238636;
+}
+QPushButton:disabled {
+    background: #484F58;
+    border-color: #6E7681;
+}
+
+/* Barre de progression */
+QProgressBar {
+    background: #161B22;
+    border: 1px solid #30363D;
+    border-radius: 8px;
+    height: 24px;
+    text-align: center;
+    font-weight: 500;
+}
+QProgressBar::chunk {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #2EA043, stop:1 #3FBA58);
+    border-radius: 7px;
+    margin: 2px;
+}
+
+/* Zones de défilement */
+QScrollArea {
+    border: 3px solid #30363D;
+    border-radius: 5px;
+    background: transparent;
+}
+QScrollBar:vertical, QScrollBar:horizontal {
+    background: transparent;
+    width: 7px;
+    margin: 0;
+}
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+    background: #30363D;
+    min-height: 20px;
+    border-radius: 6px;
+}
+
+/* Étiquettes d'information */
+QLabel#infoLabel {
+    font-size: 13px;
+    color: #8B949E;
+    padding: 6px 10px;
+    background: #161B22;
+    border-radius: 4px;
+}
+
+/* Fenêtres de message */
+QMessageBox {
+    background: #0D1117;
+    border: 1px solid #30363D;
+}
+QMessageBox QLabel {
+    color: #C9D1D9;
+    font-size: 14px;
+}
+QMessageBox QPushButton {
+    min-width: 80px;
+    padding: 8px 16px;
+}
+
+/* Couleurs spécifiques aux types */
+QCheckBox[type="extension"] { color: #58A6FF; }
+QCheckBox[type="microsoft"] { color: #DB61A2; }
+QCheckBox[type="manual"] { color: #D29922; }
+"""
+
+# ------------------- FONCTIONS UTILITAIRES -------------------
+# --- Gestion des URLs ---
 def store_url(productid):
     return f"ms-windows-store://pdp?hl=fr-fr&gl=fr&referrer=storeforweb&source=https%3A%2F%2Fwww.google.com%2F&productid={productid}&mode=mini&pos=7%2C2%2C1922%2C922"
 
@@ -32,10 +164,11 @@ def get_url(app_details):
         return extension_url(app_details['id'])
     return app_details.get('url')
 
+# --- Traitement d’images ---
 def remove_white_border(pixmap, threshold=240):
     """
-    Remplace par de la transparence le blanc (ou presque) qui est en continuité avec le bord de l'image.
-    Seuls les pixels blancs connectés aux bords seront modifiés.
+    Remplace par de la transparence le blanc (ou presque) en continuité avec le bord de l'image.
+    Seuls les pixels blancs connectés aux bords sont modifiés.
     """
     image = pixmap.toImage().convertToFormat(QImage.Format_ARGB32)
     width, height = image.width(), image.height()
@@ -46,7 +179,7 @@ def remove_white_border(pixmap, threshold=240):
         color = image.pixelColor(x, y)
         return color.red() >= threshold and color.green() >= threshold and color.blue() >= threshold
 
-    # Ajoute tous les pixels du bord s'ils sont blancs
+    # Initialisation avec les pixels du bord
     for x in range(width):
         if is_white(x, 0):
             stack.append((x, 0))
@@ -62,7 +195,7 @@ def remove_white_border(pixmap, threshold=240):
             stack.append((width - 1, y))
             visited.add((width - 1, y))
 
-    # Flood fill pour propager sur les pixels blancs connectés au bord
+    # Flood fill sur les pixels blancs connectés
     while stack:
         x, y = stack.pop()
         for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
@@ -72,7 +205,7 @@ def remove_white_border(pixmap, threshold=240):
                     stack.append((nx, ny))
                     visited.add((nx, ny))
 
-    # Rendre transparents les pixels identifiés
+    # Rendre les pixels trouvés transparents
     for x, y in visited:
         color = image.pixelColor(x, y)
         color.setAlpha(0)
@@ -81,7 +214,7 @@ def remove_white_border(pixmap, threshold=240):
     return QPixmap.fromImage(image)
 
 def round_pixmap(pixmap, radius=10):
-    """Applique des coins arrondis au QPixmap avec le rayon spécifié."""
+    """Applique des coins arrondis à un QPixmap."""
     size = pixmap.size()
     rounded = QPixmap(size)
     rounded.fill(Qt.transparent)
@@ -95,7 +228,7 @@ def round_pixmap(pixmap, radius=10):
     return rounded
 
 def load_svg_logo(url, size):
-    """Télécharge un logo SVG depuis une URL et le convertit en QPixmap de la taille indiquée."""
+    """Télécharge et convertit un logo SVG en QPixmap."""
     try:
         with requests.get(url) as response:
             response.raise_for_status()
@@ -111,6 +244,7 @@ def load_svg_logo(url, size):
         logging.error(f"Erreur lors du chargement du logo SVG depuis {url}: {e}")
         return None
 
+# ------------------- WIDGET PERSONNALISÉ -------------------
 class ClickableCheckBox(QCheckBox):
     def hitButton(self, pos):
         return self.rect().contains(pos)
@@ -122,7 +256,7 @@ class ClickableCheckBox(QCheckBox):
         else:
             super().keyPressEvent(event)
 
-#=================== DOWNLOAD STATS ===================
+# ------------------- TELECHARGEMENT & INSTALLATION -------------------
 class DownloadThread(QThread):
     progress_signal = pyqtSignal(int, float, float, float, float)
     finished_signal = pyqtSignal(str)
@@ -150,19 +284,15 @@ class DownloadThread(QThread):
                             f.close()
                             os.remove(self.file_path)
                             return
-
                         size = f.write(data)
                         downloaded += size
-
                         if total_size:
                             percent = downloaded * 100 // total_size
                             downloaded_mb = downloaded / (1024 * 1024)
                             elapsed_time = time.time() - self.start_time
                             speed = downloaded / (1024 * 1024 * elapsed_time) if elapsed_time > 0 else 0
                             eta = (total_size - downloaded) / (speed * 1024 * 1024) if speed > 0 else 0
-
                             self.progress_signal.emit(percent, total_size_mb, downloaded_mb, speed, eta)
-
             self.finished_signal.emit(self.file_path)
         except Exception as e:
             logging.error(f"Download failed: {str(e)}")
@@ -170,9 +300,7 @@ class DownloadThread(QThread):
 
     def cancel(self):
         self.is_cancelled = True
-#=================== END OF DOWNLOAD STATS ===================
 
-#=================== INSTALL APPLICATIONS ===================
 class InstallationManager(QObject):
     installation_complete = pyqtSignal()
     installation_started = pyqtSignal(str)
@@ -195,6 +323,7 @@ class InstallationManager(QObject):
             self.current_app = app
             url = get_url(details)
             app_type = details.get("type", "")
+            # Si installation manuelle
             if "(manual)" in app or app_type in ['extension', 'microsoft']:
                 webbrowser.open(url)
                 QMessageBox.information(None, "Information", f"Veuillez installer manuellement {app} depuis la page ouverte.")
@@ -235,147 +364,14 @@ class InstallationManager(QObject):
             self.current_thread = None
             self.current_app = ""
             self.process_next()
-#=================== END OF INSTALL APPLICATIONS ===================
 
+# ------------------- APPLICATION PRINCIPALE -------------------
 class AppInstaller(QWidget):
     def __init__(self):
         super().__init__()
-        self.setStyleSheet("""
-        QWidget {
-            background-color: #0D1117;
-            color: #C9D1D9;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        /* Titres */
-        QLabel[objectName^="title"] {
-            font-size: 16px;
-            font-weight: 600;
-            color: #58A6FF;
-            padding: 15px 0;
-            border-bottom: 2px solid #30363D;
-        }
-
-        /* Cases à cocher */
-        QCheckBox {
-            spacing: 10px;
-            padding: 6px;
-            background: #161B22;
-            border-radius: 6px;
-            margin: 2px 0;
-        }
-        QCheckBox::indicator {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #30363D;
-            border-radius: 4px;
-        }
-        QCheckBox::indicator:checked {
-            background: qradialgradient(cx: 0.5, cy: 0.5, radius: 0.6,
-                                        fx: 0.5, fy: 0.5,
-                                        stop: 0 #3FBA58,
-                                        stop: 1 #238636);
-            border: 2px solid #2EA043;
-            border-radius: 4px;
-        }
-
-        /* Boutons */
-        QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #238636, stop:1 #2EA043);
-            border: 1px solid #2EA043;
-            border-radius: 6px;
-            padding: 10px 25px;
-            color: white;
-            font-weight: 600;
-            min-width: 120px;
-        }
-        QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #2EA043, stop:1 #3FBA58);
-        }
-        QPushButton:pressed {
-            background: #238636;
-        }
-        QPushButton:disabled {
-            background: #484F58;
-            border-color: #6E7681;
-        }
-
-        /* Barre de progression */
-        QProgressBar {
-            background: #161B22;
-            border: 1px solid #30363D;
-            border-radius: 8px;
-            height: 24px;
-            text-align: center;
-            font-weight: 500;
-        }
-        QProgressBar::chunk {
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 #2EA043, stop:1 #3FBA58);
-            border-radius: 7px;
-            margin: 2px;
-        }
-
-        /* Zones de défilement */
-        QScrollArea {
-            border: 3px solid #30363D;
-            border-radius: 5px;
-            background: transparent;
-        }
-        QScrollBar:vertical {
-            background: transparent;
-            width: 7px;
-            margin: 0;
-        }
-        QScrollBar::handle:vertical {
-            background: #30363D;
-            min-height: 20px;
-            border-radius: 6px;
-        }
-
-        QScrollBar:horizontal {
-            background: transparent;
-            width: 7px;
-            margin: 0;
-        }
-        QScrollBar::handle:horizontal {
-            background: #30363D;
-            min-height: 20px;
-            border-radius: 6px;
-        }
-
-        /* Étiquettes d'information */
-        QLabel#infoLabel {
-            font-size: 13px;
-            color: #8B949E;
-            padding: 6px 10px;
-            background: #161B22;
-            border-radius: 4px;
-        }
-
-        /* Fenêtres de message */
-        QMessageBox {
-            background: #0D1117;
-            border: 1px solid #30363D;
-        }
-        QMessageBox QLabel {
-            color: #C9D1D9;
-            font-size: 14px;
-        }
-        QMessageBox QPushButton {
-            min-width: 80px;
-            padding: 8px 16px;
-        }
-
-        /* Couleurs spécifiques aux types */
-        QCheckBox[type="extension"] { color: #58A6FF; }
-        QCheckBox[type="microsoft"] { color: #DB61A2; }
-        QCheckBox[type="manual"] { color: #D29922; }
-        """)
         self.setWindowTitle("Applications Installer")
         self.setGeometry(700, 200, 800, 600)
+        self.setStyleSheet(STYLE_SHEET)
         self.load_applications()
         self.setup_ui()
         self.installation_manager = InstallationManager(self)
@@ -404,123 +400,115 @@ class AppInstaller(QWidget):
         }
 
     def setup_ui(self):
-        layout = QVBoxLayout(self)
-
-        # Titres
-        title_font = QFont()
-        title_font.setBold(True)
-        title_font.setPointSize(12)
-        titles = ["Applications", "Chrome Extensions", "Microsoft Store Applications"]
-        title_layout = QHBoxLayout()
-        for title_text in titles:
-            title_label = QLabel(title_text)
-            title_label.setFont(title_font)
-            title_layout.addWidget(title_label, alignment=Qt.AlignCenter)
-        layout.addLayout(title_layout)
-
-        # Boutons "Select All"
-        select_all_layout = QHBoxLayout()
-        layout.addLayout(select_all_layout)
-
-        # Colonnes de cases à cocher
-        columns_layout = QHBoxLayout()
-        layout.addLayout(columns_layout)
-
         self.checkboxes = {}
-        self.column_checkboxes = [None] * len(titles)
+        self.column_checkboxes = []
         self.select_buttons = {}
 
-        for idx, title in enumerate(titles):
-            column_layout = QVBoxLayout()
-            scroll_area = QScrollArea()
-            scroll_area.setWidgetResizable(True)
-            scroll_content = QWidget()
-            scroll_layout = QVBoxLayout(scroll_content)
-            scroll_area.setWidget(scroll_content)
-            scroll_area.setFixedWidth(230)
-            column_layout.addWidget(scroll_area)
+        main_layout = QVBoxLayout(self)
 
-            select_all_button = self.create_select_all_button(idx)
-            select_all_layout.addWidget(select_all_button)
+        # Création d'une ligne de titres
+        title_layout = QHBoxLayout()
+        titles = ["Applications", "Chrome Extensions", "Microsoft Store Applications"]
+        title_font = QFont(); title_font.setBold(True); title_font.setPointSize(12)
+        for text in titles:
+            label = QLabel(text)
+            label.setFont(title_font)
+            label.setObjectName("title")
+            title_layout.addWidget(label, alignment=Qt.AlignCenter)
+        main_layout.addLayout(title_layout)
 
-            columns_layout.addLayout(column_layout)
+        # Ligne pour les boutons "Select All"
+        select_all_layout = QHBoxLayout()
+        main_layout.addLayout(select_all_layout)
+
+        # Création des colonnes de cases à cocher
+        columns_layout = QHBoxLayout()
+        for idx in range(len(titles)):
+            column = QVBoxLayout()
+            scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
+            content = QWidget()
+            col_layout = QVBoxLayout(content)
+            scroll.setWidget(content)
+            scroll.setFixedWidth(230)
+            column.addWidget(scroll)
+            # Bouton "Select All" associé à la colonne
+            button = QPushButton("Select All")
+            button.clicked.connect(partial(self.toggle_select_column, column_index=idx))
+            select_all_layout.addWidget(button)
+            self.select_buttons[idx] = button
+            self.column_checkboxes.append(col_layout)
+            columns_layout.addLayout(column)
             if idx < len(titles) - 1:
                 columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
-            self.column_checkboxes[idx] = scroll_layout
+        main_layout.addLayout(columns_layout)
 
+        # Ajout des applications dans les colonnes appropriées
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
+            # Ajoutez la vérification sur le nom de l'application
+            if "(manual)" in app:
+                app_type = "manual"
             checkbox = ClickableCheckBox(app)
+            checkbox.setProperty("type", app_type)
 
+            # Gestion du logo
             logo_link = details.get("logo")
-            # Si aucun logo n'est défini, essaie de le trouver automatiquement via le domaine de l'URL
             if not logo_link:
                 app_url = details.get("url")
                 if app_url:
-                    parsed_url = urlparse(app_url)
-                    domain = parsed_url.netloc
+                    domain = urlparse(app_url).netloc
                     if domain:
-                        # Utilise Clearbit pour récupérer le logo à partir du domaine
                         logo_link = f"https://logo.clearbit.com/{domain}"
-
             if logo_link:
-                if logo_link.startswith("http"):
+                if logo_link.lower().startswith("http"):
                     if logo_link.lower().endswith(".svg"):
                         pixmap = load_svg_logo(logo_link, QSize(24, 24))
-                        if pixmap:
-                            # Supprimer le blanc des bords et appliquer des coins arrondis
-                            pixmap = remove_white_border(pixmap)
-                            pixmap = round_pixmap(pixmap, radius=10)
-                            checkbox.setIcon(QIcon(pixmap))
-                            checkbox.setIconSize(QSize(24, 24))
                     else:
                         try:
                             response = requests.get(logo_link)
                             response.raise_for_status()
                             image_data = response.content
                             pixmap = QPixmap()
-                            if pixmap.loadFromData(image_data):
-                                # Supprimer uniquement le blanc des contours et arrondir les coins
-                                pixmap = remove_white_border(pixmap)
-                                pixmap = round_pixmap(pixmap, radius=10)
-                                checkbox.setIcon(QIcon(pixmap))
-                                checkbox.setIconSize(QSize(24, 24))
+                            pixmap.loadFromData(image_data)
                         except Exception as e:
-                            logging.error(f"Échec du chargement de l'image distante pour {app}: {e}")
-
-            if "(manual)" in app:
-                app_type = "manual"
-            checkbox.setProperty("type", app_type)
-            column_idx = self.get_column_index_for_app_type(app_type)
-            checkbox.toggled.connect(partial(self.update_select_all_button, column_index=column_idx))
-            self.column_checkboxes[column_idx].addWidget(checkbox)
+                            logging.error(f"Échec du chargement de l'image pour {app}: {e}")
+                            pixmap = None
+                    if pixmap:
+                        pixmap = remove_white_border(pixmap)
+                        pixmap = round_pixmap(pixmap, radius=10)
+                        checkbox.setIcon(QIcon(pixmap))
+                        checkbox.setIconSize(QSize(24, 24))
+            # Placement dans la colonne selon le type
+            col_idx = self.get_column_index_for_app_type(app_type)
+            checkbox.toggled.connect(partial(self.update_select_all_button, column_index=col_idx))
+            self.column_checkboxes[col_idx].addWidget(checkbox)
             self.checkboxes[app] = checkbox
 
         # Boutons d'installation et d'annulation
-        button_layout = QHBoxLayout()
+        btn_layout = QHBoxLayout()
         self.install_button = QPushButton("Install")
         self.install_button.clicked.connect(self.install_informations)
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.cancel_installation)
         self.cancel_button.setEnabled(False)
-        button_layout.addWidget(self.install_button)
-        button_layout.addWidget(self.cancel_button)
-        layout.addLayout(button_layout)
+        btn_layout.addWidget(self.install_button)
+        btn_layout.addWidget(self.cancel_button)
+        main_layout.addLayout(btn_layout)
 
+        # Barre de progression
         self.progress_bar = QProgressBar()
-        layout.addWidget(self.progress_bar)
+        main_layout.addWidget(self.progress_bar)
 
-        # Informations de téléchargement
+        # Informations sur le téléchargement
+        info_layout = QHBoxLayout()
         self.current_app_label = QLabel()
         self.file_size_label = QLabel()
         self.speed_label = QLabel()
         self.eta_label = QLabel()
-        info_layout = QHBoxLayout()
-        info_layout.addWidget(self.current_app_label)
-        info_layout.addWidget(self.file_size_label)
-        info_layout.addWidget(self.speed_label)
-        info_layout.addWidget(self.eta_label)
-        layout.addLayout(info_layout)
+        for widget in (self.current_app_label, self.file_size_label, self.speed_label, self.eta_label):
+            info_layout.addWidget(widget)
+        main_layout.addLayout(info_layout)
 
     def create_select_all_button(self, column_index):
         button = QPushButton("Select All")
@@ -550,18 +538,19 @@ class AppInstaller(QWidget):
         return 0
 
     def get_application_type(self, app_details):
-        if "(manual)" in app_details.get("url", ""):
+        # On détermine le type depuis la clé "type" ou en fonction de "(manual)" dans le nom/url
+        if "(manual)" in app_details.get("url", "") or "(manual)" in app_details.get("name", ""):
             return "manual"
         return app_details.get("type", "")
 
     def install_informations(self):
         if self.installation_manager.current_thread:
-            QMessageBox.warning(self, "Warning", "An installation is already in progress. Please wait for it to finish.")
+            QMessageBox.warning(self, "Warning", "Une installation est déjà en cours. Veuillez patienter.")
             return
 
-        applications_to_install = [app for app, checkbox in self.checkboxes.items() if checkbox.isChecked()]
+        applications_to_install = [app for app, cb in self.checkboxes.items() if cb.isChecked()]
         if not applications_to_install:
-            QMessageBox.information(self, "Information", "No application selected!")
+            QMessageBox.information(self, "Information", "Aucune application sélectionnée!")
             return
 
         downloads_path = self.get_downloads_path()
@@ -600,7 +589,6 @@ class AppInstaller(QWidget):
         self.file_size_label.setText("")
         self.speed_label.setText("")
         self.eta_label.setText("")
-        # À la fin, on peut fermer l'application ou réactiver le bouton d'installation selon le besoin
 
     def get_downloads_path(self):
         sub_key = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
@@ -608,11 +596,11 @@ class AppInstaller(QWidget):
         try:
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sub_key) as key:
                 value, _ = winreg.QueryValueEx(key, downloads_guid)
-                downloads_path = os.path.expandvars(value)
-                return Path(downloads_path)
+                return Path(os.path.expandvars(value))
         except FileNotFoundError:
             return Path.home() / "Downloads"
 
+# ------------------- POINT D'ENTRÉE -------------------
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     installer = AppInstaller()
