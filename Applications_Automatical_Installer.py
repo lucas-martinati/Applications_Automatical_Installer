@@ -7,13 +7,14 @@ from pathlib import Path
 from functools import partial
 from PyQt5.QtWidgets import (QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton,
                              QMessageBox, QLabel, QSpacerItem, QSizePolicy, QScrollArea, QProgressBar)
-from PyQt5.QtGui import QFont, QIcon, QPixmap, QPainter
+from PyQt5.QtGui import QFont, QIcon, QPixmap, QPainter, QImage, QPainterPath
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject, QSize
 from PyQt5.QtSvg import QSvgRenderer
 import requests
 import winreg
 import subprocess
 import webbrowser
+from urllib.parse import urlparse
 
 logging.basicConfig(filename='app_installer.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,6 +31,68 @@ def get_url(app_details):
     elif app_details.get('type') == 'extension':
         return extension_url(app_details['id'])
     return app_details.get('url')
+
+def remove_white_border(pixmap, threshold=240):
+    """
+    Remplace par de la transparence le blanc (ou presque) qui est en continuité avec le bord de l'image.
+    Seuls les pixels blancs connectés aux bords seront modifiés.
+    """
+    image = pixmap.toImage().convertToFormat(QImage.Format_ARGB32)
+    width, height = image.width(), image.height()
+    visited = set()
+    stack = []
+
+    def is_white(x, y):
+        color = image.pixelColor(x, y)
+        return color.red() >= threshold and color.green() >= threshold and color.blue() >= threshold
+
+    # Ajoute tous les pixels du bord s'ils sont blancs
+    for x in range(width):
+        if is_white(x, 0):
+            stack.append((x, 0))
+            visited.add((x, 0))
+        if is_white(x, height - 1):
+            stack.append((x, height - 1))
+            visited.add((x, height - 1))
+    for y in range(height):
+        if is_white(0, y):
+            stack.append((0, y))
+            visited.add((0, y))
+        if is_white(width - 1, y):
+            stack.append((width - 1, y))
+            visited.add((width - 1, y))
+
+    # Flood fill pour propager sur les pixels blancs connectés au bord
+    while stack:
+        x, y = stack.pop()
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < width and 0 <= ny < height and (nx, ny) not in visited:
+                if is_white(nx, ny):
+                    stack.append((nx, ny))
+                    visited.add((nx, ny))
+
+    # Rendre transparents les pixels identifiés
+    for x, y in visited:
+        color = image.pixelColor(x, y)
+        color.setAlpha(0)
+        image.setPixelColor(x, y, color)
+
+    return QPixmap.fromImage(image)
+
+def round_pixmap(pixmap, radius=10):
+    """Applique des coins arrondis au QPixmap avec le rayon spécifié."""
+    size = pixmap.size()
+    rounded = QPixmap(size)
+    rounded.fill(Qt.transparent)
+    painter = QPainter(rounded)
+    painter.setRenderHint(QPainter.Antialiasing)
+    path = QPainterPath()
+    path.addRoundedRect(0, 0, size.width(), size.height(), radius, radius)
+    painter.setClipPath(path)
+    painter.drawPixmap(0, 0, pixmap)
+    painter.end()
+    return rounded
 
 def load_svg_logo(url, size):
     """Télécharge un logo SVG depuis une URL et le convertit en QPixmap de la taille indiquée."""
@@ -385,16 +448,29 @@ class AppInstaller(QWidget):
                 columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
             self.column_checkboxes[idx] = scroll_layout
 
-        # Création des cases à cocher avec logo (si disponible)
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
             checkbox = ClickableCheckBox(app)
+
             logo_link = details.get("logo")
+            # Si aucun logo n'est défini, essaie de le trouver automatiquement via le domaine de l'URL
+            if not logo_link:
+                app_url = details.get("url")
+                if app_url:
+                    parsed_url = urlparse(app_url)
+                    domain = parsed_url.netloc
+                    if domain:
+                        # Utilise Clearbit pour récupérer le logo à partir du domaine
+                        logo_link = f"https://logo.clearbit.com/{domain}"
+
             if logo_link:
                 if logo_link.startswith("http"):
                     if logo_link.lower().endswith(".svg"):
                         pixmap = load_svg_logo(logo_link, QSize(24, 24))
                         if pixmap:
+                            # Supprimer le blanc des bords et appliquer des coins arrondis
+                            pixmap = remove_white_border(pixmap)
+                            pixmap = round_pixmap(pixmap, radius=10)
                             checkbox.setIcon(QIcon(pixmap))
                             checkbox.setIconSize(QSize(24, 24))
                     else:
@@ -404,13 +480,14 @@ class AppInstaller(QWidget):
                             image_data = response.content
                             pixmap = QPixmap()
                             if pixmap.loadFromData(image_data):
+                                # Supprimer uniquement le blanc des contours et arrondir les coins
+                                pixmap = remove_white_border(pixmap)
+                                pixmap = round_pixmap(pixmap, radius=10)
                                 checkbox.setIcon(QIcon(pixmap))
                                 checkbox.setIconSize(QSize(24, 24))
                         except Exception as e:
                             logging.error(f"Échec du chargement de l'image distante pour {app}: {e}")
-                elif os.path.exists(logo_link):
-                    checkbox.setIcon(QIcon(logo_link))
-                    checkbox.setIconSize(QSize(24, 24))
+
             if "(manual)" in app:
                 app_type = "manual"
             checkbox.setProperty("type", app_type)
