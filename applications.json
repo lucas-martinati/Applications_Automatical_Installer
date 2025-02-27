@@ -49,6 +49,9 @@
     "url": "https://cdn.akamai.steamstatic.com/client/installer/SteamSetup.exe",
     "logo": "https://img.icons8.com/?size=100&id=zNqjI8XKkCv0&format=png&color=000000"
   },
+  "Stremio": {
+    "url": "https://dl.strem.io/stremio-shell-ng/v5.0.2/StremioSetup-v5.0.2.exe"
+  },
   "Streamlabs": {
     "url": "https://streamlabs.com/streamlabs-desktop/download?sdb=0",
     "logo": "https://img.icons8.com/?size=100&id=737Z6OZqhRFK&format=png&color=000000"
