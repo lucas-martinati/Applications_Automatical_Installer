@@ -18,7 +18,6 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QFont, QIcon, QPixmap, QPainter, QImage, QPainterPath
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject, QSize
-from PyQt5.QtSvg import QSvgRenderer
 
 # Configuration du logging
 logging.basicConfig(
