@@ -51,9 +51,16 @@ Please note that certain applications, such as "Nvidia App" or "Davinci Resolve,
 - ProtonVPN
 - Rockstar Games
 - Steam
+- Stremio
 - Streamlabs
 - Wemod
 - Winrar
+- Rectify11 (manual)
+- Davinci Resolve (manual)
+- HWINFO (manual)
+- NVIDIA App (manual)
+- NVIDIA GeForce NOW (manual)
+- Voicemod (manual)
 
 ## 📱 Chrome extensions
 
@@ -70,8 +77,10 @@ Please note that certain applications, such as "Nvidia App" or "Davinci Resolve,
 
 ## 📱 Microsoft Store applications
 
+- Bitwarden
 - Visual Studio Code
 - Microsoft PowerToys
+- Xbox Accessories
 - Pichon
 - Wintoys
 - Office
