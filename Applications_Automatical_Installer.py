@@ -27,7 +27,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# ------------------- CONSTANTES & FEUILLE DE STYLE -------------------
+# ### Feuille de style ###
 STYLE_SHEET = """
 QWidget {
     background-color: #0D1117;
@@ -143,7 +143,7 @@ QCheckBox[type="microsoft"] { color: #DB61A2; }
 QCheckBox[type="manual"] { color: #D29922; }
 """
 
-# ------------------- FONCTIONS UTILITAIRES -------------------
+# ### Fonctions utilitaires ###
 def store_url(productid: str) -> str:
     """Génère une URL pour le Microsoft Store."""
     return f"ms-windows-store://pdp?hl=fr-fr&gl=fr&productid={productid}&mode=mini"
@@ -211,23 +211,7 @@ def round_pixmap(pixmap: QPixmap, radius: int = 10) -> QPixmap:
     painter.end()
     return rounded
 
-def load_svg_logo(url: str, size: QSize) -> QPixmap:
-    """Charge un logo SVG et le convertit en QPixmap."""
-    try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        renderer = QSvgRenderer(response.content)
-        pixmap = QPixmap(size)
-        pixmap.fill(Qt.transparent)
-        painter = QPainter(pixmap)
-        renderer.render(painter)
-        painter.end()
-        return pixmap
-    except requests.RequestException as e:
-        logging.error(f"Erreur lors du chargement du logo SVG depuis {url}: {e}")
-        return None
-
-# ------------------- WIDGET PERSONNALISÉ -------------------
+# ### Widget personnalisé ###
 class ClickableCheckBox(QCheckBox):
     """Case à cocher cliquable avec support du clic et des touches."""
     def hitButton(self, pos):
@@ -240,7 +224,7 @@ class ClickableCheckBox(QCheckBox):
         else:
             super().keyPressEvent(event)
 
-# ------------------- TÉLÉCHARGEMENT & INSTALLATION -------------------
+# ### Téléchargement & Installation ###
 class DownloadThread(QThread):
     """Thread pour télécharger un fichier en arrière-plan."""
     progress_signal = pyqtSignal(int, float, float, float, float)  # Pourcentage, taille totale, téléchargé, vitesse, ETA
@@ -352,7 +336,35 @@ class InstallationManager(QObject):
             self.current_app = ""
             self.process_next()
 
-# ------------------- APPLICATION PRINCIPALE -------------------
+# ### Chargeur d'images asynchrone ###
+class ImageLoader(QThread):
+    image_loaded = pyqtSignal(str, QPixmap)  # Signal pour envoyer l'image traitée
+
+    def __init__(self, app_name, logo_url):
+        super().__init__()
+        self.app_name = app_name
+        self.logo_url = logo_url
+
+    def run(self):
+        try:
+            response = requests.get(self.logo_url, timeout=5)
+            response.raise_for_status()
+            pixmap = QPixmap()
+            pixmap.loadFromData(response.content)
+
+            # Redimensionner l'image en premier pour optimiser les performances
+            pixmap = pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+            # Retirer les bordures blanches
+            pixmap = remove_white_border(pixmap)
+
+            # Arrondir les coins
+            pixmap = round_pixmap(pixmap, radius=8)
+            self.image_loaded.emit(self.app_name, pixmap)
+        except requests.RequestException as e:
+            logging.error(f"Échec du chargement de l'image pour {self.app_name}: {e}")
+
+# ### Application principale ###
 class AppInstaller(QWidget):
     """Fenêtre principale de l'installeur d'applications."""
     def __init__(self):
@@ -363,6 +375,7 @@ class AppInstaller(QWidget):
         self.checkboxes = {}
         self.column_checkboxes = []
         self.select_buttons = {}
+        self.image_loaders = []
         self.load_applications()
         self.setup_ui()
         self.installation_manager = InstallationManager(self)
@@ -434,7 +447,7 @@ class AppInstaller(QWidget):
                 columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         main_layout.addLayout(columns_layout)
 
-        # Ajout des applications
+        # Ajout des applications avec chargement asynchrone des logos
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
             if "(manual)" in app:
@@ -442,28 +455,17 @@ class AppInstaller(QWidget):
             checkbox = ClickableCheckBox(app)
             checkbox.setProperty("type", app_type)
 
-            # Chargement du logo
+            # Chargement asynchrone du logo
             logo_link = details.get("logo")
             if not logo_link and (app_url := details.get("url")):
                 domain = urlparse(app_url).netloc
                 if domain:
                     logo_link = f"https://logo.clearbit.com/{domain}"
             if logo_link and logo_link.lower().startswith("http"):
-                pixmap = load_svg_logo(logo_link, QSize(24, 24)) if logo_link.lower().endswith(".svg") else None
-                if not pixmap:
-                    try:
-                        response = requests.get(logo_link, timeout=5)
-                        response.raise_for_status()
-                        pixmap = QPixmap()
-                        pixmap.loadFromData(response.content)
-                    except requests.RequestException as e:
-                        logging.error(f"Échec du chargement de l'image pour {app}: {e}")
-                        pixmap = None
-                if pixmap:
-                    pixmap = remove_white_border(pixmap)
-                    pixmap = round_pixmap(pixmap, radius=10)
-                    checkbox.setIcon(QIcon(pixmap))
-                    checkbox.setIconSize(QSize(24, 24))
+                loader = ImageLoader(app, logo_link)
+                loader.image_loaded.connect(self.update_checkbox_icon)
+                self.image_loaders.append(loader)  # Ajouter le thread à la liste
+                loader.start()
 
             col_idx = self.get_column_index_for_app_type(app_type)
             checkbox.toggled.connect(partial(self.update_select_all_button, column_index=col_idx))
@@ -494,6 +496,12 @@ class AppInstaller(QWidget):
         for widget in (self.current_app_label, self.file_size_label, self.speed_label, self.eta_label):
             info_layout.addWidget(widget)
         main_layout.addLayout(info_layout)
+
+    def update_checkbox_icon(self, app_name, pixmap):
+        """Met à jour l'icône de la case à cocher avec l'image chargée."""
+        if app_name in self.checkboxes:
+            self.checkboxes[app_name].setIcon(QIcon(pixmap))
+            self.checkboxes[app_name].setIconSize(QSize(24, 24))
 
     def toggle_select_column(self, column_index: int):
         """Active ou désactive toutes les cases d'une colonne."""
@@ -548,10 +556,8 @@ class AppInstaller(QWidget):
         self.installation_manager.cancel_current_installation()
         self.progress_bar.setValue(0)
 
-    def on_installation_complete(self):
-        self.close()
-
     def on_installation_started(self, app):
+        """Met à jour l'interface quand une installation commence."""
         self.current_app_label.setText(f"Installing: {app}")
         self.file_size_label.setText("Total size: -")
         self.speed_label.setText("Speed: -")
@@ -582,7 +588,15 @@ class AppInstaller(QWidget):
         except FileNotFoundError:
             return Path.home() / "Downloads"
 
-# ------------------- POINT D'ENTRÉE -------------------
+    def closeEvent(self, event):
+        """Attend la fin des threads de chargement d'images avant de fermer."""
+        for loader in self.image_loaders:
+            if loader.isRunning():
+                loader.quit()
+                loader.wait()
+        event.accept()
+
+# ### Point d'entrée ###
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     installer = AppInstaller()

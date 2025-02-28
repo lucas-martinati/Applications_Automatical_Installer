@@ -1,4 +1,5 @@
 ## 🔽 Installation
+
 **Note:** Installation is only necessary if you intend to modify the source code.
 
 1. **Install Python and Required Packages**:
@@ -10,20 +11,23 @@
 
 - **Standard Usage on Windows**:
 
-   Simply execute the provided `Applications_Automatical_Installer.exe` file to launch the application.
+  Simply execute the provided `Applications_Automatical_Installer.exe` file to launch the application.
 
 - **Modifying the Python Code**:
 
-   If you wish to modify the source code, run the corresponding `Install_dependency.bat` script to set up the development environment.
+  If you wish to modify the source code, run the corresponding `Install_dependency.bat` script to set up the development environment.
 
 - **Recompiling the Python Script into an Executable**:
 
-   After making changes to the code, use the following command to generate a new executable:
-    ```
-    venv\Scripts\activate
-    pyinstaller --onefile --windowed --add-data "applications.json;." Applications_Automatical_Installer.py
-    ```
-    This command creates a standalone executable from your Python script, including the necessary `applications.json` file.
+  After making changes to the code, use the following command to generate a new executable:
+
+  ```
+  Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+  venv\Scripts\activate
+  pyinstaller --onefile --windowed --add-data "applications.json;." Applications_Automatical_Installer.py
+  ```
+
+  This command creates a standalone executable from your Python script, including the necessary `applications.json` file.
 
 ## 🤔 Explanation
 
