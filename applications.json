@@ -10,7 +10,8 @@
     "url": "https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi"
   },
   "Git": {
-    "url": "https://github.com/git-for-windows/git/releases/download/v2.44.0.windows.1/Git-2.44.0-64-bit.exe"
+    "url": "https://github.com/git-for-windows/git/releases/download/v2.44.0.windows.1/Git-2.44.0-64-bit.exe",
+    "logo": "https://img.icons8.com/color/2x/git"
   },
   "GOG Galaxy": {
     "url": "https://webinstallers.gog-statics.com/download/GOG_Galaxy_2.0.exe?payload=aKB7F3BHw5NoN2YWknDMijQCYnKgHNmiuE-ZQH5qOFwqEprfTG4XR9vIgNeGZ1bBFQ2v7owOBlberSmn-yntUfS_14Aeqz3fwP2gAmbadgMcI9zO000XgA_7rXdfrzBTmnAGSLkOp9726xxtCKf8-OgkjdudGNIO_Rmgcjb5YEV2HwJV7kTft9jrTFD2haCI6Py8Sht6AiAMQKwcKU-pItTuypAjuSihxff5IcpeAqDeRyKQDF1cJlpe_D5hrDC5SLGykrIaXdP6ZjWTG9U0YDWYacADIeObsaiuTUbKEQU32bvfz0-p1v3JJYS20PFYSxccdCsavCo2K6E_eVAgKT1EsSVc96l_uxM4Sl2jxoYo4_5py65cKpSsv2osfCvu31LKZ6TvkRFZ8rm6MYeJx0OX5ASiiRAqmBCl2LYr6eFqnbmdyFb5mFNHVTvSTPHY5jt1HG3je2IOXdgtWMP8G7q7Gv-22JUF0q1QCjqPOxz-KClk-UDCKkgKZQVT4m0RB26q3McGHzUYUpHQThP1vA8A555MhyUevz5UHTinjzib8rtGHKn3_J1geGrYobhpy0yTOJ_UHE_pnUP-bxMYPRyJpKf-DNZbdvo99q_C47Jp38WD5fg4wgmJvjoWhI3KU04CabrE4Pl9VuXDFu4R5p8xLNSzp28QrG-G6nb6ZQ3YNZdrId4sOqlS-kNUhscX0eQzRRJoLc6ih5c3v24uoMks8OFhhhJzw2NgRlijgrR2cxgjsYXFYbu3OfMNXywyA3Ds",
@@ -86,8 +87,7 @@
 
   "Authenticator": {
     "id": "authenticator/bhghoamapcdpbohphigoooaddinpkbai",
-    "type": "extension",
-    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Google_Authenticator_%28April_2023%29.svg/120px-Google_Authenticator_%28April_2023%29.svg.png"
+    "type": "extension"
   },
   "Buster - Captcha Solver": {
     "id": "buster-captcha-solver-for/mpbjkejclgfgadiemmefgebjfooflfhl",
@@ -111,16 +111,17 @@
   "Return YouTube Dislike": {
     "id": "gebbhagfogifgggkldgodflihgfeippi",
     "type": "extension",
-    "logo": "https://upload.wikimedia.org/wikipedia/commons/9/90/ReturnYoutubeDislike.png"
+    "logo": "https://github.com/Anarios/return-youtube-dislike/blob/main/Icons/128x128_transparent.jpg?raw=true"
   },
   "SponsorBlock": {
     "id": "mnjggcdmjocbbbhaepdhchncahnbgone",
     "type": "extension",
-    "logo": "https://upload.wikimedia.org/wikipedia/commons/b/bd/SponsorBlockLogo.png"
+    "logo": "https://raw.githubusercontent.com/ajayyy/SponsorBlock/master/public/icons/LogoSponsorBlocker256px.png"
   },
   "Steam Inventory Helper": {
     "id": "steam-inventory-helper/cmeakgjggjdlcpncigglobpjbkabhmjl",
-    "type": "extension"
+    "type": "extension",
+    "logo": "https://optim.tildacdn.com/tild6438-3963-4865-b131-336461313561/-/resize/180x/-/format/webp/Logo_1.png"
   },
   "Twitch Live": {
     "id": "twitch-live-extension/nlnfdlcbnpafokhpjfffmoobbejpedgj",
@@ -131,6 +132,11 @@
     "type": "extension"
   },
 
+  "Bitwarden": {
+    "productid": "9PJSDV0VPK04",
+    "type": "microsoft",
+    "logo": "https://img.icons8.com/color/2x/bitwarden"
+  },
   "Visual Studio Code": {
     "productid": "xp9khm4bk9fz7q",
     "type": "microsoft",
@@ -140,6 +146,11 @@
     "productid": "xp89dcgq3k6vld",
     "type": "microsoft",
     "logo": "https://img.icons8.com/?size=512&id=9CRu43eXe5Pp&format=png"
+  },
+  "Xbox Accessories": {
+    "productid": "9nblggh30xj3",
+    "type": "microsoft",
+    "logo": "https://store-images.s-microsoft.com/image/apps.55570.13510798885083716.a84f438e-2bd3-4709-9b32-7f3173a1de1c.0fc62251-6b80-43e0-99d1-3fe70b818484?h=210"
   },
   "Wintoys": {
     "productid": "9p8ltpgcbzxd",
