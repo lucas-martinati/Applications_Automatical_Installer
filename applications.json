@@ -57,6 +57,10 @@
     "url": "https://streamlabs.com/streamlabs-desktop/download?sdb=0",
     "logo": "https://img.icons8.com/?size=100&id=737Z6OZqhRFK&format=png&color=000000"
   },
+  "Ubisoft Connect": {
+    "url": "https://ubistatic3-a.akamaihd.net/orbit/launcher_installer/UbisoftConnectInstaller.exe",
+    "logo": "https://cdn2.steamgriddb.com/icon/dabcff9ba10224b01fd2ce83f7d73ad6/32/1024x1024.png"
+  },
   "Wemod": {
     "url": "https://www.wemod.com/download/direct"
   },

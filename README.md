@@ -53,6 +53,7 @@ Please note that certain applications, such as "Nvidia App" or "Davinci Resolve,
 - Steam
 - Stremio
 - Streamlabs
+- Ubisoft Connect
 - Wemod
 - Winrar
 - Rectify11 (manual)
