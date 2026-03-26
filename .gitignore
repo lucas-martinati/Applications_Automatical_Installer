@@ -1,5 +1,5 @@
-venv
 build
 dist
 app_installer.log
 Applications_Automatical_Installer.spec
+venv/
