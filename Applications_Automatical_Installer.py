@@ -9,24 +9,51 @@ import webbrowser
 from pathlib import Path
 from functools import partial
 from urllib.parse import urlparse
+from concurrent.futures import ThreadPoolExecutor
+
 import requests
-import winreg
+
+try:
+    import winreg
+except ImportError:
+    winreg = None  # Allow running on non-Windows for development/testing
 
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QCheckBox, QPushButton,
-    QMessageBox, QLabel, QSpacerItem, QSizePolicy, QScrollArea, QProgressBar
+    QMessageBox, QLabel, QSpacerItem, QSizePolicy, QScrollArea, QProgressBar,
+    QLineEdit
 )
 from PyQt5.QtGui import QFont, QIcon, QPixmap, QPainter, QImage, QPainterPath
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject, QSize
 
-# Configuration du logging
+# --- Constants ---
+ICON_DISPLAY_SIZE = 24
+ICON_LOAD_SIZE = 64
+ICON_CORNER_RADIUS = 8
+DOWNLOAD_BLOCK_SIZE = 65536  # 64KB chunks for faster downloads
+DOWNLOAD_TIMEOUT = 15
+IMAGE_LOAD_TIMEOUT = 5
+WHITE_BORDER_THRESHOLD = 240
+MAX_CONCURRENT_IMAGE_LOADERS = 6
+WINDOW_TITLE = "Applications Installer"
+WINDOW_GEOMETRY = (700, 200, 800, 600)
+SCROLL_COLUMN_WIDTH = 230
+
+# --- Logging Configuration ---
 logging.basicConfig(
     filename='app_installer.log',
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
-# ### Feuille de style ###
+# --- Resource Path (PyInstaller compatibility) ---
+def resource_path(relative_path: str) -> Path:
+    """Get the absolute path to a resource, works for dev and PyInstaller."""
+    if hasattr(sys, '_MEIPASS'):
+        return Path(sys._MEIPASS) / relative_path
+    return Path(__file__).parent / relative_path
+
+# --- Stylesheet ---
 STYLE_SHEET = """
 QWidget {
     background-color: #0D1117;
@@ -124,6 +151,18 @@ QLabel#infoLabel {
     border-radius: 4px;
 }
 
+QLineEdit {
+    background: #161B22;
+    border: 1px solid #30363D;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #C9D1D9;
+    font-size: 14px;
+}
+QLineEdit:focus {
+    border-color: #58A6FF;
+}
+
 QMessageBox {
     background: #0D1117;
     border: 1px solid #30363D;
@@ -142,17 +181,22 @@ QCheckBox[type="microsoft"] { color: #DB61A2; }
 QCheckBox[type="manual"] { color: #D29922; }
 """
 
-# ### Fonctions utilitaires ###
-def store_url(productid: str) -> str:
-    """Génère une URL pour le Microsoft Store."""
-    return f"ms-windows-store://pdp?hl=fr-fr&gl=fr&productid={productid}&mode=mini"
+# --- HTTP Headers ---
+REQUEST_HEADERS = {
+    "User-Agent": "ApplicationsInstaller/1.0"
+}
 
-def extension_url(id: str) -> str:
-    """Génère une URL pour une extension Chrome."""
-    return f"https://chromewebstore.google.com/detail/{id}"
+# --- Utility Functions ---
+def store_url(productid: str) -> str:
+    """Generate a Microsoft Store URL."""
+    return f"ms-windows-store://pdp?hl=en-us&gl=us&productid={productid}&mode=mini"
+
+def extension_url(ext_id: str) -> str:
+    """Generate a Chrome Web Store extension URL."""
+    return f"https://chromewebstore.google.com/detail/{ext_id}"
 
 def get_url(app_details: dict) -> str:
-    """Retourne l'URL appropriée selon le type d'application."""
+    """Return the appropriate URL based on application type."""
     app_type = app_details.get('type')
     if app_type == 'microsoft':
         return store_url(app_details['productid'])
@@ -160,10 +204,14 @@ def get_url(app_details: dict) -> str:
         return extension_url(app_details['id'])
     return app_details.get('url', '')
 
-def remove_white_border(pixmap: QPixmap, threshold: int = 240) -> QPixmap:
-    """Supprime les bordures blanches connectées aux bords d'une image."""
+def remove_white_border(pixmap: QPixmap, threshold: int = WHITE_BORDER_THRESHOLD) -> QPixmap:
+    """Remove white borders connected to the edges of an image using flood fill."""
     image = pixmap.toImage().convertToFormat(QImage.Format_ARGB32)
     width, height = image.width(), image.height()
+
+    if width == 0 or height == 0:
+        return pixmap
+
     visited = set()
     stack = []
 
@@ -171,24 +219,28 @@ def remove_white_border(pixmap: QPixmap, threshold: int = 240) -> QPixmap:
         color = image.pixelColor(x, y)
         return all(c >= threshold for c in (color.red(), color.green(), color.blue()))
 
-    # Ajouter les pixels des bordures à la pile
+    # Add border pixels to the stack
     for x in range(width):
-        if is_white(x, 0): stack.append((x, 0)); visited.add((x, 0))
-        if is_white(x, height - 1): stack.append((x, height - 1)); visited.add((x, height - 1))
+        for y_pos in (0, height - 1):
+            if is_white(x, y_pos) and (x, y_pos) not in visited:
+                stack.append((x, y_pos))
+                visited.add((x, y_pos))
     for y in range(height):
-        if is_white(0, y): stack.append((0, y)); visited.add((0, y))
-        if is_white(width - 1, y): stack.append((width - 1, y)); visited.add((width - 1, y))
+        for x_pos in (0, width - 1):
+            if is_white(x_pos, y) and (x_pos, y) not in visited:
+                stack.append((x_pos, y))
+                visited.add((x_pos, y))
 
-    # Algorithme de remplissage par inondation
+    # Flood fill algorithm
     while stack:
         x, y = stack.pop()
-        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+        for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
             nx, ny = x + dx, y + dy
             if 0 <= nx < width and 0 <= ny < height and (nx, ny) not in visited and is_white(nx, ny):
                 stack.append((nx, ny))
                 visited.add((nx, ny))
 
-    # Rendre les pixels blancs transparents
+    # Make visited white pixels transparent
     for x, y in visited:
         color = image.pixelColor(x, y)
         color.setAlpha(0)
@@ -196,8 +248,8 @@ def remove_white_border(pixmap: QPixmap, threshold: int = 240) -> QPixmap:
 
     return QPixmap.fromImage(image)
 
-def round_pixmap(pixmap: QPixmap, radius: int = 10) -> QPixmap:
-    """Applique des coins arrondis à un QPixmap."""
+def round_pixmap(pixmap: QPixmap, radius: int = ICON_CORNER_RADIUS) -> QPixmap:
+    """Apply rounded corners to a QPixmap."""
     size = pixmap.size()
     rounded = QPixmap(size)
     rounded.fill(Qt.transparent)
@@ -210,9 +262,9 @@ def round_pixmap(pixmap: QPixmap, radius: int = 10) -> QPixmap:
     painter.end()
     return rounded
 
-# ### Widget personnalisé ###
+# --- Custom Widget ---
 class ClickableCheckBox(QCheckBox):
-    """Case à cocher cliquable avec support du clic et des touches."""
+    """Checkbox with proper click and keyboard support."""
     def hitButton(self, pos):
         return self.rect().contains(pos)
 
@@ -223,11 +275,11 @@ class ClickableCheckBox(QCheckBox):
         else:
             super().keyPressEvent(event)
 
-# ### Téléchargement & Installation ###
+# --- Download & Installation ---
 class DownloadThread(QThread):
-    """Thread pour télécharger un fichier en arrière-plan."""
-    progress_signal = pyqtSignal(int, float, float, float, float)  # Pourcentage, taille totale, téléchargé, vitesse, ETA
-    finished_signal = pyqtSignal(str)  # Chemin du fichier ou vide si échec
+    """Thread for downloading a file in the background."""
+    progress_signal = pyqtSignal(int, float, float, float, float)  # percent, total_mb, downloaded_mb, speed, eta
+    finished_signal = pyqtSignal(str)  # file path or empty on failure
 
     def __init__(self, url: str, file_path: str):
         super().__init__()
@@ -238,20 +290,17 @@ class DownloadThread(QThread):
 
     def run(self):
         try:
-            with requests.get(self.url, stream=True, timeout=10) as response:
+            with requests.get(self.url, stream=True, timeout=DOWNLOAD_TIMEOUT, headers=REQUEST_HEADERS) as response:
                 response.raise_for_status()
                 total_size = int(response.headers.get('content-length', 0))
                 total_size_mb = total_size / (1024 * 1024)
-                block_size = 8192
                 downloaded = 0
                 self.start_time = time.time()
 
                 with open(self.file_path, "wb") as f:
-                    for data in response.iter_content(block_size):
+                    for data in response.iter_content(DOWNLOAD_BLOCK_SIZE):
                         if self.is_cancelled:
-                            f.close()
-                            os.remove(self.file_path)
-                            return
+                            break
                         downloaded += f.write(data)
                         if total_size:
                             percent = downloaded * 100 // total_size
@@ -260,19 +309,34 @@ class DownloadThread(QThread):
                             speed = downloaded_mb / elapsed_time if elapsed_time > 0 else 0
                             eta = (total_size - downloaded) / (speed * 1024 * 1024) if speed > 0 else 0
                             self.progress_signal.emit(percent, total_size_mb, downloaded_mb, speed, eta)
+
+            if self.is_cancelled:
+                self._cleanup_file()
+                return
+
             self.finished_signal.emit(self.file_path)
         except requests.RequestException as e:
-            logging.error(f"Échec du téléchargement de {self.url}: {e}")
+            logging.error(f"Download failed for {self.url}: {e}")
+            self._cleanup_file()
             self.finished_signal.emit("")
 
+    def _cleanup_file(self):
+        """Safely remove the partially downloaded file."""
+        try:
+            if os.path.exists(self.file_path):
+                os.remove(self.file_path)
+        except OSError as e:
+            logging.warning(f"Failed to clean up file {self.file_path}: {e}")
+
     def cancel(self):
-        """Annule le téléchargement en cours."""
+        """Cancel the ongoing download."""
         self.is_cancelled = True
 
+
 class InstallationManager(QObject):
-    """Gestionnaire de la file d'attente des installations."""
+    """Manages the installation queue."""
     installation_complete = pyqtSignal()
-    installation_started = pyqtSignal(str)
+    installation_started = pyqtSignal(str, int, int)  # app_name, current_index, total_count
     installation_finished = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -280,23 +344,31 @@ class InstallationManager(QObject):
         self.queue = []
         self.current_thread = None
         self.current_app = ""
+        self.total_count = 0
+        self.current_index = 0
 
     def add_to_queue(self, app: str, details: dict, downloads_path: Path):
-        """Ajoute une application à la file d'attente."""
+        """Add an application to the installation queue."""
         self.queue.append((app, details, downloads_path))
+        self.total_count = len(self.queue) + self.current_index
         if not self.current_thread:
             self.process_next()
 
     def process_next(self):
-        """Traite la prochaine application dans la file."""
+        """Process the next application in the queue."""
         while self.queue:
             app, details, downloads_path = self.queue.pop(0)
             self.current_app = app
+            self.current_index += 1
             url = get_url(details)
             app_type = details.get("type", "")
-            if "(manual)" in app:
+
+            if "(manual)" in app.lower():
                 webbrowser.open(url)
-                QMessageBox.information(None, "Information", f"Please install {app} manually.")
+                QMessageBox.information(None, "Information", f"Please install {app} manually from the opened page.")
+                continue
+            elif app_type in ('extension', 'microsoft'):
+                webbrowser.open(url)
                 continue
             else:
                 file_ext = ".msi" if url.endswith('.msi') else ".exe"
@@ -304,113 +376,142 @@ class InstallationManager(QObject):
                 self.current_thread = DownloadThread(url, str(file_path))
                 self.current_thread.progress_signal.connect(self.parent().update_progress)
                 self.current_thread.finished_signal.connect(partial(self.install_application, app=app))
-                self.installation_started.emit(app)
+                self.installation_started.emit(app, self.current_index, self.total_count)
                 self.current_thread.start()
                 break
         else:
+            self._reset()
             self.installation_finished.emit()
             self.installation_complete.emit()
         self.parent().update_button_states()
 
     def install_application(self, file_path: str, app: str):
-        """Lance l'installation d'une application téléchargée."""
+        """Launch the installer for a downloaded application."""
         if file_path:
-            if file_path.endswith('.msi'):
-                subprocess.Popen(["msiexec", "/i", file_path], shell=True)
-            else:
-                subprocess.Popen([file_path], shell=True)
-            logging.info(f"Installation démarrée pour {app}")
+            try:
+                if file_path.endswith('.msi'):
+                    subprocess.Popen(["msiexec", "/i", file_path])
+                else:
+                    subprocess.Popen([file_path])
+                logging.info(f"Installation started for {app}")
+            except OSError as e:
+                logging.error(f"Failed to launch installer for {app}: {e}")
+                QMessageBox.critical(None, "Error", f"Failed to launch installer for {app}:\n{e}")
         else:
-            logging.error(f"Échec du téléchargement de {app}")
-            QMessageBox.critical(None, "Erreur", f"Échec du téléchargement de {app}")
+            logging.error(f"Download failed for {app}")
+            QMessageBox.critical(None, "Error", f"Download failed for {app}")
+
         self.current_thread = None
         self.current_app = ""
         self.process_next()
 
     def cancel_current_installation(self):
-        """Annule l'installation en cours."""
+        """Cancel the current installation."""
         if self.current_thread:
             self.current_thread.cancel()
             self.current_thread = None
             self.current_app = ""
-            self.process_next()
+        self.queue.clear()
+        self._reset()
+        self.installation_finished.emit()
 
-# ### Chargeur d'images asynchrone ###
+    def _reset(self):
+        """Reset counters."""
+        self.total_count = 0
+        self.current_index = 0
+
+
+# --- Async Image Loader ---
 class ImageLoader(QThread):
-    image_loaded = pyqtSignal(str, QPixmap)  # Signal pour envoyer l'image traitée
+    """Thread for loading and processing application logos asynchronously."""
+    image_loaded = pyqtSignal(str, QPixmap)
 
-    def __init__(self, app_name, logo_url):
+    def __init__(self, app_name: str, logo_url: str):
         super().__init__()
         self.app_name = app_name
         self.logo_url = logo_url
 
     def run(self):
         try:
-            response = requests.get(self.logo_url, timeout=5)
+            response = requests.get(self.logo_url, timeout=IMAGE_LOAD_TIMEOUT, headers=REQUEST_HEADERS)
             response.raise_for_status()
             pixmap = QPixmap()
             pixmap.loadFromData(response.content)
 
-            # Redimensionner l'image en premier pour optimiser les performances
-            pixmap = pixmap.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            if pixmap.isNull():
+                logging.warning(f"Failed to decode image for {self.app_name}")
+                return
 
-            # Retirer les bordures blanches
+            # Resize first for performance
+            pixmap = pixmap.scaled(ICON_LOAD_SIZE, ICON_LOAD_SIZE, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             pixmap = remove_white_border(pixmap)
+            pixmap = round_pixmap(pixmap)
 
-            # Arrondir les coins
-            pixmap = round_pixmap(pixmap, radius=8)
             self.image_loaded.emit(self.app_name, pixmap)
         except requests.RequestException as e:
-            logging.error(f"Échec du chargement de l'image pour {self.app_name}: {e}")
+            logging.warning(f"Failed to load image for {self.app_name}: {e}")
 
-# ### Application principale ###
+
+# --- Main Application ---
 class AppInstaller(QWidget):
-    """Fenêtre principale de l'installeur d'applications."""
+    """Main application installer window."""
+
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Applications Installer")
-        self.setGeometry(700, 200, 800, 600)
+        self.setWindowTitle(WINDOW_TITLE)
+        self.setGeometry(*WINDOW_GEOMETRY)
         self.setStyleSheet(STYLE_SHEET)
         self.checkboxes = {}
         self.column_checkboxes = []
         self.select_buttons = {}
         self.image_loaders = []
+        self._image_loader_pool = []  # Track active loaders for throttling
+        self._pending_image_loads = []  # Queue for pending image loads
+
         self.load_applications()
         self.setup_ui()
+
         self.installation_manager = InstallationManager(self)
         self.installation_manager.installation_complete.connect(self.on_installation_complete)
         self.installation_manager.installation_started.connect(self.on_installation_started)
         self.installation_manager.installation_finished.connect(self.on_installation_finished)
 
     def load_applications(self):
-        """Charge les applications depuis un fichier JSON ou utilise les valeurs par défaut."""
-        script_dir = Path(__file__).parent
-        json_path = script_dir / 'applications.json'
+        """Load applications from the JSON file."""
+        json_path = resource_path('applications.json')
         try:
             with open(json_path, 'r', encoding='utf-8') as f:
                 self.applications = json.load(f)
         except FileNotFoundError:
-            logging.error(f"applications.json non trouvé à {json_path}. Utilisation des valeurs par défaut.")
+            logging.error(f"applications.json not found at {json_path}. Using defaults.")
+            self.applications = self.get_default_applications()
+        except json.JSONDecodeError as e:
+            logging.error(f"Invalid JSON in applications.json: {e}. Using defaults.")
             self.applications = self.get_default_applications()
 
     def get_default_applications(self) -> dict:
-        """Retourne une liste d'applications par défaut."""
+        """Return a minimal default application list."""
         return {
-            "Brave": {"url": "https://laptop-updates.brave.com/latest/winx64", "logo": "https://img.icons8.com/?size=100&id=cM42lftaD9Z3&format=png&color=000000"},
-            "Discord": {"url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64", "logo": "https://img.icons8.com/color/2x/discord"},
-            "HWINFO (manual)": {"url": "https://www.hwinfo.com/download/", "logo": "https://www.hwinfo.com/wp-content/themes/hwinfo/img/logo-sm.png"},
-            "NVIDIA App (manual)": {"url": "https://fr.download.nvidia.com/nvapp/client/10.0.0.535/NVIDIA_app_beta_v10.0.0.535.exe", "logo": "https://img.icons8.com/color/512/nvidia.png"},
-            "Dark Reader": {"url": extension_url("dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh"), "type": "extension", "logo": "logos/dark_reader.png"},
-            "Google Traduction": {"url": extension_url("google-translate/aapbdbdomjkkjkaonfhkkikfgjllcleb"), "type": "extension", "logo": "logos/google_translate.png"},
+            "Brave": {"url": "https://laptop-updates.brave.com/latest/winx64"},
+            "Discord": {
+                "url": "https://discord.com/api/downloads/distributions/app/installers/latest?channel=stable&platform=win&arch=x64",
+                "logo": "https://img.icons8.com/color/2x/discord"
+            },
         }
 
     def setup_ui(self):
-        """Configure l'interface utilisateur."""
+        """Set up the user interface."""
         main_layout = QVBoxLayout(self)
 
-        # Titres des colonnes
+        # Search bar
+        self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("🔍  Search applications...")
+        self.search_bar.textChanged.connect(self.filter_applications)
+        main_layout.addWidget(self.search_bar)
+
+        # Column titles
         title_layout = QHBoxLayout()
-        titles = ["Applications", "Chrome Extensions", "Microsoft Store Applications"]
+        titles = ["Applications", "Chrome Extensions", "Microsoft Store"]
         title_font = QFont()
         title_font.setBold(True)
         title_font.setPointSize(12)
@@ -421,11 +522,11 @@ class AppInstaller(QWidget):
             title_layout.addWidget(label, alignment=Qt.AlignCenter)
         main_layout.addLayout(title_layout)
 
-        # Boutons "Select All"
+        # Select All buttons
         select_all_layout = QHBoxLayout()
         main_layout.addLayout(select_all_layout)
 
-        # Colonnes de cases à cocher
+        # Checkbox columns
         columns_layout = QHBoxLayout()
         for idx in range(len(titles)):
             column = QVBoxLayout()
@@ -434,7 +535,7 @@ class AppInstaller(QWidget):
             content = QWidget()
             col_layout = QVBoxLayout(content)
             scroll.setWidget(content)
-            scroll.setFixedWidth(230)
+            scroll.setFixedWidth(SCROLL_COLUMN_WIDTH)
             column.addWidget(scroll)
             button = QPushButton("Select All")
             button.clicked.connect(partial(self.toggle_select_column, column_index=idx))
@@ -446,32 +547,32 @@ class AppInstaller(QWidget):
                 columns_layout.addItem(QSpacerItem(40, 10, QSizePolicy.Expanding, QSizePolicy.Minimum))
         main_layout.addLayout(columns_layout)
 
-        # Ajout des applications avec chargement asynchrone des logos
+        # Add applications with async logo loading
         for app, details in self.applications.items():
             app_type = self.get_application_type(details)
-            if "(manual)" in app:
+            if "(manual)" in app.lower():
                 app_type = "manual"
             checkbox = ClickableCheckBox(app)
             checkbox.setProperty("type", app_type)
 
-            # Chargement asynchrone du logo
+            # Queue async logo loading
             logo_link = details.get("logo")
             if not logo_link and (app_url := details.get("url")):
                 domain = urlparse(app_url).netloc
                 if domain:
                     logo_link = f"https://logo.clearbit.com/{domain}"
             if logo_link and logo_link.lower().startswith("http"):
-                loader = ImageLoader(app, logo_link)
-                loader.image_loaded.connect(self.update_checkbox_icon)
-                self.image_loaders.append(loader)  # Ajouter le thread à la liste
-                loader.start()
+                self._pending_image_loads.append((app, logo_link))
 
             col_idx = self.get_column_index_for_app_type(app_type)
             checkbox.toggled.connect(partial(self.update_select_all_button, column_index=col_idx))
             self.column_checkboxes[col_idx].addWidget(checkbox)
             self.checkboxes[app] = checkbox
 
-        # Boutons d'action
+        # Start loading images with throttling
+        self._start_image_loading()
+
+        # Action buttons
         btn_layout = QHBoxLayout()
         self.install_button = QPushButton("Install")
         self.install_button.clicked.connect(self.start_installation)
@@ -482,120 +583,174 @@ class AppInstaller(QWidget):
         btn_layout.addWidget(self.cancel_button)
         main_layout.addLayout(btn_layout)
 
-        # Barre de progression
+        # Progress bar
         self.progress_bar = QProgressBar()
         main_layout.addWidget(self.progress_bar)
 
-        # Informations de téléchargement
+        # Download info labels
         info_layout = QHBoxLayout()
         self.current_app_label = QLabel()
+        self.queue_label = QLabel()
         self.file_size_label = QLabel()
         self.speed_label = QLabel()
         self.eta_label = QLabel()
-        for widget in (self.current_app_label, self.file_size_label, self.speed_label, self.eta_label):
+        for widget in (self.current_app_label, self.queue_label, self.file_size_label, self.speed_label, self.eta_label):
             info_layout.addWidget(widget)
         main_layout.addLayout(info_layout)
 
-    def update_checkbox_icon(self, app_name, pixmap):
-        """Met à jour l'icône de la case à cocher avec l'image chargée."""
+        # Status label (shown when all installations complete)
+        self.status_label = QLabel()
+        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setStyleSheet("color: #3FBA58; font-size: 14px; font-weight: 600; padding: 8px;")
+        self.status_label.hide()
+        main_layout.addWidget(self.status_label)
+
+    def _start_image_loading(self):
+        """Start loading images with a concurrency limit."""
+        while self._pending_image_loads and len(self._image_loader_pool) < MAX_CONCURRENT_IMAGE_LOADERS:
+            app_name, logo_url = self._pending_image_loads.pop(0)
+            loader = ImageLoader(app_name, logo_url)
+            loader.image_loaded.connect(self.update_checkbox_icon)
+            loader.finished.connect(partial(self._on_image_loader_finished, loader))
+            self._image_loader_pool.append(loader)
+            self.image_loaders.append(loader)
+            loader.start()
+
+    def _on_image_loader_finished(self, loader):
+        """Called when an image loader finishes — start the next one."""
+        if loader in self._image_loader_pool:
+            self._image_loader_pool.remove(loader)
+        self._start_image_loading()
+
+    def filter_applications(self, text: str):
+        """Filter visible checkboxes based on search text."""
+        search = text.lower().strip()
+        for app_name, checkbox in self.checkboxes.items():
+            checkbox.setVisible(search == "" or search in app_name.lower())
+
+    def update_checkbox_icon(self, app_name: str, pixmap: QPixmap):
+        """Update the checkbox icon with the loaded image."""
         if app_name in self.checkboxes:
             self.checkboxes[app_name].setIcon(QIcon(pixmap))
-            self.checkboxes[app_name].setIconSize(QSize(24, 24))
+            self.checkboxes[app_name].setIconSize(QSize(ICON_DISPLAY_SIZE, ICON_DISPLAY_SIZE))
 
     def toggle_select_column(self, column_index: int):
-        """Active ou désactive toutes les cases d'une colonne."""
+        """Toggle all checkboxes in a column."""
         layout = self.column_checkboxes[column_index]
-        any_checked = any(layout.itemAt(i).widget().isChecked() for i in range(layout.count()))
-        for i in range(layout.count()):
-            layout.itemAt(i).widget().setChecked(not any_checked)
+        visible_widgets = [
+            layout.itemAt(i).widget() for i in range(layout.count())
+            if layout.itemAt(i).widget() and layout.itemAt(i).widget().isVisible()
+        ]
+        any_checked = any(w.isChecked() for w in visible_widgets)
+        for w in visible_widgets:
+            w.setChecked(not any_checked)
         self.update_select_all_button(column_index)
 
     def update_select_all_button(self, column_index: int):
-        """Met à jour le texte du bouton Select All/Deselect All."""
+        """Update the Select All/Deselect All button text."""
         layout = self.column_checkboxes[column_index]
-        any_checked = any(layout.itemAt(i).widget().isChecked() for i in range(layout.count()))
+        any_checked = any(
+            layout.itemAt(i).widget().isChecked()
+            for i in range(layout.count())
+            if layout.itemAt(i).widget()
+        )
         self.select_buttons[column_index].setText("Deselect All" if any_checked else "Select All")
 
     def get_column_index_for_app_type(self, app_type: str) -> int:
-        """Retourne l'index de la colonne selon le type d'application."""
+        """Return the column index for a given application type."""
         return {'extension': 1, 'microsoft': 2}.get(app_type, 0)
 
     def get_application_type(self, app_details: dict) -> str:
-        """Détermine le type d'application."""
+        """Determine the application type."""
         return app_details.get("type", "")
 
     def start_installation(self):
-        """Démarre l'installation des applications sélectionnées."""
+        """Start installing selected applications."""
         if self.installation_manager.current_thread:
-            QMessageBox.warning(self, "Attention", "Une installation est en cours. Veuillez patienter.")
+            QMessageBox.warning(self, "Warning", "An installation is already in progress. Please wait.")
             return
+
         applications_to_install = [app for app, cb in self.checkboxes.items() if cb.isChecked()]
         if not applications_to_install:
             QMessageBox.information(self, "Information", "No application selected!")
             return
+
+        self.status_label.hide()
         downloads_path = self.get_downloads_path()
         for app in applications_to_install:
             self.installation_manager.add_to_queue(app, self.applications[app], downloads_path)
         self.update_button_states()
 
     def update_progress(self, percent: int, total_size_mb: float, downloaded_mb: float, speed: float, eta: float):
-        """Met à jour la barre de progression et les informations."""
+        """Update the progress bar and download info."""
         self.progress_bar.setValue(percent)
-        self.file_size_label.setText(f"Total size: {downloaded_mb:.2f}/{total_size_mb:.2f}MB")
-        self.speed_label.setText(f"Speed: {speed:.2f}MB/s")
-        self.eta_label.setText(f"ETA: {eta:.0f}s")
+        self.file_size_label.setText(f"Size: {downloaded_mb:.1f}/{total_size_mb:.1f} MB")
+        self.speed_label.setText(f"Speed: {speed:.1f} MB/s")
+        minutes, seconds = divmod(int(eta), 60)
+        self.eta_label.setText(f"ETA: {minutes}m {seconds}s" if minutes else f"ETA: {seconds}s")
 
     def update_button_states(self):
-        """Met à jour l'état des boutons."""
-        self.install_button.setEnabled(not self.installation_manager.current_thread)
-        self.cancel_button.setEnabled(bool(self.installation_manager.current_thread))
+        """Update button enabled/disabled states."""
+        is_installing = bool(self.installation_manager.current_thread)
+        self.install_button.setEnabled(not is_installing)
+        self.cancel_button.setEnabled(is_installing)
 
     def cancel_installation(self):
-        """Annule l'installation en cours."""
+        """Cancel the current installation and clear the queue."""
         self.installation_manager.cancel_current_installation()
         self.progress_bar.setValue(0)
+        self.status_label.setText("⚠️  Installation cancelled.")
+        self.status_label.setStyleSheet("color: #D29922; font-size: 14px; font-weight: 600; padding: 8px;")
+        self.status_label.show()
 
-    def on_installation_started(self, app):
-        """Met à jour l'interface quand une installation commence."""
+    def on_installation_started(self, app: str, current: int, total: int):
+        """Update UI when an installation starts."""
         self.current_app_label.setText(f"Installing: {app}")
-        self.file_size_label.setText("Total size: -")
-        self.speed_label.setText("Speed: -")
-        self.eta_label.setText("ETA: -")
+        self.queue_label.setText(f"({current}/{total})")
+        self.file_size_label.setText("Size: —")
+        self.speed_label.setText("Speed: —")
+        self.eta_label.setText("ETA: —")
         self.update_button_states()
 
     def on_installation_finished(self):
-        """Réinitialise l'interface après une installation."""
+        """Reset UI after all installations are done."""
         self.progress_bar.setValue(0)
         self.current_app_label.setText("")
+        self.queue_label.setText("")
         self.file_size_label.setText("")
         self.speed_label.setText("")
         self.eta_label.setText("")
         self.update_button_states()
 
     def on_installation_complete(self):
-        """Ferme l'application quand tout est terminé."""
-        self.close()
+        """Show completion message instead of closing."""
+        self.status_label.setText("✅  All installations completed successfully!")
+        self.status_label.setStyleSheet("color: #3FBA58; font-size: 14px; font-weight: 600; padding: 8px;")
+        self.status_label.show()
 
     def get_downloads_path(self) -> Path:
-        """Récupère le chemin du dossier Téléchargements."""
+        """Get the Windows Downloads folder path."""
+        if winreg is None:
+            return Path.home() / "Downloads"
         sub_key = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
         downloads_guid = "{374DE290-123F-4565-9164-39C4925E467B}"
         try:
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, sub_key) as key:
                 value, _ = winreg.QueryValueEx(key, downloads_guid)
                 return Path(os.path.expandvars(value))
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError):
             return Path.home() / "Downloads"
 
     def closeEvent(self, event):
-        """Attend la fin des threads de chargement d'images avant de fermer."""
+        """Wait for image loader threads to finish before closing."""
         for loader in self.image_loaders:
             if loader.isRunning():
                 loader.quit()
-                loader.wait()
+                loader.wait(2000)  # Wait up to 2 seconds per thread
         event.accept()
 
-# ### Point d'entrée ###
+
+# --- Entry Point ---
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     installer = AppInstaller()

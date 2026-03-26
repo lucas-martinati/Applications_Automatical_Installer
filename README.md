@@ -7,7 +7,7 @@ A Windows tool to automatically install a list of selected applications.
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/<your-username>/Applications_Automatical_Installer.git
+   git clone https://github.com/lucas-martinati/Applications_Automatical_Installer.git
    cd Applications_Automatical_Installer
    ```
 
@@ -20,8 +20,18 @@ A Windows tool to automatically install a list of selected applications.
 
 ### Run directly with Python
 
-```bash
+First, activate the virtual environment, then run the script:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+venv\Scripts\activate
 python Applications_Automatical_Installer.py
+```
+
+Or use the venv Python directly without activating:
+
+```powershell
+.\venv\Scripts\python.exe Applications_Automatical_Installer.py
 ```
 
 ### Compile to `.exe`

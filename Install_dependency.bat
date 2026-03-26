@@ -1,5 +1,17 @@
 @echo off
+
+REM === Auto-elevate to Administrator ===
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Requesting administrator privileges...
+    powershell -Command "Start-Process cmd -ArgumentList '/c \"%~f0\"' -Verb RunAs"
+    exit /b
+)
+
 setlocal enabledelayedexpansion
+
+REM Navigate to the script's directory (supports UNC paths)
+pushd "%~dp0"
 
 REM Check if Python is already installed
 where python >nul 2>nul
@@ -25,7 +37,7 @@ echo Python has been successfully installed.
 
 :setup_venv
 echo Creating virtual environment...
-python -m venv venv
+python -m venv --copies venv
 if %errorlevel% neq 0 (
     echo Failed to create virtual environment.
     goto :cleanup
@@ -52,6 +64,7 @@ echo All required packages have been successfully installed.
 
 :cleanup
 if exist python_installer.exe del python_installer.exe
+popd
 
 echo Installation process complete.
 pause
