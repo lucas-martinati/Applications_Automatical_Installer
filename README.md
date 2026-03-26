@@ -1,39 +1,48 @@
+# 🖥️ Applications Automatical Installer
+
+A Windows tool to automatically install a list of selected applications.
+
 ## 🔽 Installation
 
-**Note:** Installation is only necessary if you intend to modify the source code.
+1. **Clone the repository**:
 
-1. **Install Python and Required Packages**:
+   ```bash
+   git clone https://github.com/<your-username>/Applications_Automatical_Installer.git
+   cd Applications_Automatical_Installer
+   ```
 
-   -Run the `install_python_and_packages.bat` file. This script will install Python (if not already installed) and the necessary packages.
-   -After execution, restart the script to ensure all packages are properly installed.
+2. **Install Python and dependencies**:
+
+   Run the `Install_dependency.bat` script. It will install Python (if not already installed) and the required packages.
+   Re-run the script after execution to ensure all packages are properly installed.
 
 ## 🚀 Usage
 
-- **Standard Usage on Windows**:
+### Run directly with Python
 
-  Simply execute the provided `Applications_Automatical_Installer.exe` file to launch the application.
+```bash
+python Applications_Automatical_Installer.py
+```
 
-- **Modifying the Python Code**:
+### Compile to `.exe`
 
-  If you wish to modify the source code, run the corresponding `Install_dependency.bat` script to set up the development environment.
+To generate a standalone executable, run the following commands in PowerShell:
 
-- **Recompiling the Python Script into an Executable**:
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+venv\Scripts\activate
+pyinstaller --onefile --windowed --add-data "applications.json;." Applications_Automatical_Installer.py
+```
 
-  After making changes to the code, use the following command to generate a new executable:
+The executable will be generated in the `dist/` folder.
 
-  ```
-  Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-  venv\Scripts\activate
-  pyinstaller --onefile --windowed --add-data "applications.json;." Applications_Automatical_Installer.py
-  ```
+> **Note:** Make sure `pyinstaller` is installed (`pip install pyinstaller`).
 
-  This command creates a standalone executable from your Python script, including the necessary `applications.json` file.
+## 🤔 How It Works
 
-## 🤔 Explanation
+This repository enables the automatic installation of selected applications from an easily extendable list. Each application is installed with administrator privileges to prevent conflicts, and the installation files are saved in the Windows `Downloads` folder.
 
-This repository facilitates the automatic installation of selected applications from an easily extendable list. Each application is installed with administrative privileges to prevent conflicts, and the installation files are saved in the Windows 'Downloads' folder.
-
-Please note that certain applications, such as "Nvidia App" or "Davinci Resolve," require an active internet connection during installation and cannot be installed automatically. For these, the script will redirect you to the official website for manual installation. These applications are labeled as “(Manual)” and highlighted in purpe. Additionally, a list of extensions is provided, directing you to their respective sites.
+Some applications like **Nvidia App** or **Davinci Resolve** require an active internet connection during installation and cannot be installed automatically. The script will redirect you to the official website for manual installation. These applications are labeled as "(Manual)" and displayed in purple. A list of extensions is also provided with links to their respective sites.
 
 ## 📱 Applications
 
@@ -63,7 +72,7 @@ Please note that certain applications, such as "Nvidia App" or "Davinci Resolve,
 - NVIDIA GeForce NOW (manual)
 - Voicemod (manual)
 
-## 📱 Chrome extensions
+## 🧩 Chrome Extensions
 
 - Authenticator
 - Buster - Captcha Solver
@@ -76,7 +85,7 @@ Please note that certain applications, such as "Nvidia App" or "Davinci Resolve,
 - Twitch Live
 - Volume Master
 
-## 📱 Microsoft Store applications
+## 🏪 Microsoft Store Applications
 
 - Bitwarden
 - Visual Studio Code
@@ -85,5 +94,7 @@ Please note that certain applications, such as "Nvidia App" or "Davinci Resolve,
 - Pichon
 - Wintoys
 - Office
+
+## 📸 Preview
 
 ![image](https://github.com/user-attachments/assets/84e37193-f74a-4178-ba29-e74090392ba0)
